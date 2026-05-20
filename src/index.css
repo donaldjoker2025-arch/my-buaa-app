@@ -1,0 +1,49 @@
+/* 定义颜色变量 */
+:root {
+  --color-background-primary: #ffffff;
+  --color-background-secondary: #f4f6f8;
+  --color-background-tertiary: #e9ecef;
+  --color-text-primary: #212529;
+  --color-text-secondary: #495057;
+  --color-text-tertiary: #868e96;
+  --color-border-primary: #ced4da;
+  --color-border-secondary: #dee2e6;
+  --color-border-tertiary: #e9ecef;
+  --border-radius-md: 6px;
+  --border-radius-lg: 10px;
+  --color-text-info: #228be6;
+}
+
+/* 全局基础重置 */
+body {
+  margin: 0;
+  background-color: #f8f9fa; /* 极浅的灰色背景 */
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  color: var(--color-text-primary);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* 美化输入框和下拉菜单 */
+input, select {
+  padding: 10px 12px;
+  border: 1px solid var(--color-border-primary);
+  border-radius: var(--border-radius-md);
+  font-size: 14px;
+  background-color: var(--color-background-primary);
+  transition: all 0.2s ease-in-out;
+  box-sizing: border-box;
+}
+
+input:focus, select:focus {
+  outline: none;
+  border-color: var(--color-text-info);
+  box-shadow: 0 0 0 3px rgba(34, 139, 230, 0.15); /* 聚焦时加入柔和的蓝色光晕 */
+}
+
+/* 卡片轻微悬浮动画 */
+.supervisor-card {
+  transition: transform 0.1s ease, box-shadow 0.1s ease;
+}
+.supervisor-card:hover {
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
