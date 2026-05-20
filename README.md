@@ -1,16 +1,26 @@
-# React + Vite
+# 🎓 北航生医两院硕导数据库 (BUAA BME & MSE Supervisor Database)
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+> 本项目是一个为北京航空航天大学**生物与医学工程学院 (10系)** 和 **医学科学与工程学院 (医工)** 打造的保研/考研导师信息查询与分析系统。
 
-Currently, two official plugins are available:
+👉 **[点击这里直接访问在线系统](https://donaldjoker2025-arch.github.io/my-buaa-app/)**
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## ✨ 核心功能
+* 🔍 **多维检索**：支持按导师姓名、研究方向、关键词进行模糊搜索。
+* 🏷️ **分类筛选**：支持按学院、细分研究领域（如医疗AI、脑机接口、生物传感等）快速过滤。
+* 📊 **客观评价**：从“就业前景”、“学术水平”、“延毕风险”等维度对导师进行星级评估。
+* 💡 **保研建议**：内置避坑指南与重点推荐名单，帮助准研究生做出更优选择。
 
-## React Compiler
+## 🚀 为什么做这个项目？
+保研/考研选导师是关乎未来三年甚至职业生涯的重要决策。由于官方信息分散、缺乏往届学生的真实评价，导致很多同学在选导师时存在信息差。本项目旨在打破信息壁垒，以**就业导向**为核心，整合并客观评估两院导师信息。
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## 🛠️ 技术栈
+* **前端框架**：React + Vite
+* **部署平台**：GitHub Pages 自动化部署
 
-## Expanding the ESLint configuration
+## 🤝 贡献与补充
+目前数据库共收录 50+ 位导师信息，并已筛除部分纯基础/生材等容易踩坑或煮波不太感冒的方向。
+如果你有更多内部信息，或者发现数据有误，欢迎提交 Issues 或与我联系补充！
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## 免责声明
+所有信息均来自互联网公开信息，如果有不妥的地方请联系我删除或修改。
+（所有信息均有AI整理，AI不一定正确，请谨慎参考！）
