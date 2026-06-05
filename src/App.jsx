@@ -1,4 +1,23 @@
 import { useMemo, useState } from "react";
+import {
+  AlertTriangle,
+  ArrowUpRight,
+  BarChart3,
+  BookOpen,
+  CheckCircle2,
+  ChevronDown,
+  ClipboardCheck,
+  ExternalLink,
+  Filter,
+  GraduationCap,
+  Layers,
+  Link as LinkIcon,
+  Mail,
+  Search,
+  SlidersHorizontal,
+  UserRound,
+  Users,
+} from "lucide-react";
 
 const BME_SOURCE_URL = "https://bme.buaa.edu.cn/zhaopinHr.aspx?catID=9&curID=713&subcatID=40";
 const BME_TEACHERS_URL = "https://bme.buaa.edu.cn/teachers.aspx?catID=7";
@@ -290,47 +309,265 @@ const sourceCards = [
   },
 ];
 
-function chipStyle(tone = "neutral") {
-  const tones = {
-    neutral: { bg: "var(--color-background-tertiary)", text: "var(--color-text-secondary)" },
-    blue: { bg: "#E7F1FF", text: "#1C5D99" },
-    green: { bg: "#E1F5EE", text: "#0F6E56" },
-    amber: { bg: "#FFF4DB", text: "#8A5A00" },
-  };
-  const color = tones[tone] ?? tones.neutral;
-  return {
-    fontSize: 12,
-    padding: "3px 9px",
-    borderRadius: "var(--border-radius-md)",
-    background: color.bg,
-    color: color.text,
-    lineHeight: 1.4,
-  };
+function getDirectionItems(item) {
+  return item.directions.length ? item.directions : item.categories;
 }
 
-function linkButtonStyle() {
-  return {
-    display: "inline-flex",
-    alignItems: "center",
-    gap: 6,
-    padding: "8px 11px",
-    borderRadius: "var(--border-radius-md)",
-    border: "1px solid var(--color-border-secondary)",
-    background: "var(--color-background-primary)",
-    color: "var(--color-text-info)",
-    textDecoration: "none",
-    fontSize: 13,
-  };
+function getPrimaryDirection(item) {
+  const [first] = getDirectionItems(item);
+  return first?.replace(/^\S+\s+/, "") ?? "待从官网进一步核验";
+}
+
+function getEvidenceItems(item) {
+  return [
+    { label: "学院官网来源", active: Boolean(item.sourceUrl) },
+    { label: "个人/官网入口", active: Boolean(item.profileUrl) },
+    { label: "公开方向索引", active: getDirectionItems(item).length > 0 && !getDirectionItems(item).includes("医工学院师资索引") },
+    { label: "公开邮箱", active: Boolean(item.email) },
+  ];
+}
+
+function getEvidenceSummary(item) {
+  const evidence = getEvidenceItems(item);
+  const count = evidence.filter((entry) => entry.active).length;
+  const label = count >= 4 ? "线索完整" : count >= 3 ? "可先联系" : "需补充核验";
+  return { count, total: evidence.length, label, evidence };
+}
+
+function getStudentClues(item) {
+  const directions = getDirectionItems(item);
+  const clues = [];
+
+  if (item.school === "生物与医学工程学院") {
+    clues.push("适合先按官方培养方向筛选，再逐一核对导师主页和当年招生目录。");
+  } else {
+    clues.push("适合从医工学院师资索引进入个人页，重点核对具体课题组方向。");
+  }
+
+  if (directions.length >= 4) {
+    clues.push("公开方向覆盖较多，适合方向尚未完全锁定、想比较交叉方向的同学。");
+  } else if (directions.length > 1) {
+    clues.push("公开方向较集中，可结合论文和课题组网页判断匹配度。");
+  } else {
+    clues.push("页面仅有基础师资索引，联系前建议补充检索个人主页、论文和课题组新闻。");
+  }
+
+  if (item.email) {
+    clues.push("已整理公开邮箱，可作为初次礼貌联系入口。");
+  } else {
+    clues.push("未整理到公开邮箱，建议先通过官网个人页或学院页面核验联系方式。");
+  }
+
+  if (item.tags.includes("兼职导师")) {
+    clues.push("标注为兼职导师，务必确认当年是否招生、培养地点和联合指导安排。");
+  }
+
+  return clues;
+}
+
+const verificationChecklist = [
+  "当年是否在目标专业/方向招生",
+  "硕士、博士、专硕或学硕名额",
+  "是否有联合培养、临床或企业合作安排",
+  "近两三年论文、项目和课题组新闻",
+  "回复邮箱、面试材料和简历投递要求",
+];
+
+const adviceBlocks = [
+  {
+    icon: ClipboardCheck,
+    title: "联系导师前",
+    lines: [
+      "先核对当前学院、职称、主页、联系方式和当年招生目录，再阅读近两三篇代表性论文或课题组新闻。",
+      "简历中写清专业背景、课程/项目经历、科研或工程技能、希望申请的培养方向，不绑定任何特定奖项模板。",
+    ],
+  },
+  {
+    icon: Mail,
+    title: "套磁邮件",
+    lines: [
+      "主题建议使用：推免/考研咨询-姓名-本科院校-意向方向。",
+      "正文保持简短：自我介绍、为何关注该方向、已有能力与可投入时间、附件简历；避免群发痕迹。",
+    ],
+  },
+  {
+    icon: AlertTriangle,
+    title: "信息核验",
+    lines: [
+      "同名教师、跨学院任职、兼职导师和页面迁移都可能导致旧资料失效，最终以学院官网、北航教师个人主页和当年招生通知为准。",
+      "本页面不对导师作主观排名，也不展示无法公开核验的毕业风险、就业薪资或学生评价。",
+    ],
+  },
+];
+
+function Chip({ children, tone = "neutral" }) {
+  return <span className={`chip chip--${tone}`}>{children}</span>;
+}
+
+function SectionTitle({ eyebrow, title, children }) {
+  return (
+    <div className="section-title">
+      {eyebrow && <span className="eyebrow">{eyebrow}</span>}
+      <h2>{title}</h2>
+      {children && <p>{children}</p>}
+    </div>
+  );
 }
 
 function SourceNotice() {
   return (
-    <div style={{ marginBottom: 18, padding: "12px 14px", border: "1px solid var(--color-border-tertiary)", borderRadius: "var(--border-radius-lg)", background: "var(--color-background-secondary)" }}>
-      <p style={{ margin: "0 0 6px", fontSize: 13, fontWeight: 600 }}>数据说明</p>
-      <p style={{ margin: 0, fontSize: 12, color: "var(--color-text-secondary)", lineHeight: 1.7 }}>
-        本页优先展示官网可核验信息：生医工学院按官方硕士培养方向表汇总，医工学院按官网人员列表和师资详情索引汇总。未由公开页面直接确认的职称、评价、主观打分不再展示。
-      </p>
+    <div className="notice">
+      <CheckCircle2 aria-hidden="true" />
+      <div>
+        <p>数据说明</p>
+        <span>
+          本页优先展示官网可核验信息：生医工学院按官方硕士培养方向表汇总，医工学院按官网人员列表和师资详情索引汇总。未由公开页面直接确认的职称、评价、主观打分不再展示。
+        </span>
+      </div>
     </div>
+  );
+}
+
+function SupervisorCard({ item, expanded, onToggle }) {
+  const directions = getDirectionItems(item);
+  const evidence = getEvidenceSummary(item);
+  const progress = `${(evidence.count / evidence.total) * 100}%`;
+
+  return (
+    <article className="supervisor-card">
+      <button type="button" className="supervisor-card__summary" onClick={onToggle} aria-expanded={expanded}>
+        <div className="supervisor-card__identity">
+          <div className="avatar" aria-hidden="true">{item.name.slice(0, 1)}</div>
+          <div className="supervisor-card__main">
+            <div className="supervisor-card__headline">
+              <h3>{item.name}</h3>
+              <span>{item.title}</span>
+            </div>
+            <div className="supervisor-card__chips">
+              <Chip tone={item.school === "医学科学与工程学院" ? "blue" : "green"}>{item.school}</Chip>
+              {item.tags.map((tag) => <Chip key={tag} tone={tag === "兼职导师" ? "amber" : "neutral"}>{tag}</Chip>)}
+              <Chip tone="slate">{evidence.label}</Chip>
+            </div>
+          </div>
+        </div>
+
+        <div className="supervisor-card__metrics">
+          <div>
+            <strong>{directions.length}</strong>
+            <span>公开方向</span>
+          </div>
+          <div>
+            <strong>{item.email ? "有" : "待查"}</strong>
+            <span>邮箱</span>
+          </div>
+          <ChevronDown className={expanded ? "chevron chevron--open" : "chevron"} aria-hidden="true" />
+        </div>
+      </button>
+
+      <div className="direction-strip">
+        {directions.slice(0, 5).map((direction) => <Chip key={direction}>{direction}</Chip>)}
+        {directions.length > 5 && <Chip tone="outline">+{directions.length - 5} 个方向</Chip>}
+      </div>
+
+      {expanded && (
+        <div className="supervisor-card__detail">
+          <div className="detail-grid">
+            <div className="detail-panel">
+              <span className="detail-label">学生选择线索</span>
+              <ul className="plain-list">
+                {getStudentClues(item).map((clue) => <li key={clue}>{clue}</li>)}
+              </ul>
+            </div>
+            <div className="detail-panel">
+              <span className="detail-label">可核验资料</span>
+              <div className="evidence-meter" aria-label={`可核验线索 ${evidence.count}/${evidence.total}`}>
+                <div style={{ width: progress }} />
+              </div>
+              <div className="evidence-list">
+                {evidence.evidence.map((entry) => (
+                  <span key={entry.label} className={entry.active ? "evidence-item evidence-item--active" : "evidence-item"}>
+                    <CheckCircle2 aria-hidden="true" />
+                    {entry.label}
+                  </span>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <div className="detail-panel">
+            <span className="detail-label">公开方向/索引分类</span>
+            <div className="chip-row">
+              {directions.map((direction) => <Chip key={direction}>{direction}</Chip>)}
+            </div>
+          </div>
+
+          <div className="detail-grid detail-grid--compact">
+            <div className="fact-row">
+              <Layers aria-hidden="true" />
+              <div>
+                <span>覆盖类别</span>
+                <p>{item.groups.join("、")}</p>
+              </div>
+            </div>
+            <div className="fact-row">
+              <BookOpen aria-hidden="true" />
+              <div>
+                <span>主要线索</span>
+                <p>{getPrimaryDirection(item)}</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="action-row">
+            {item.email && (
+              <a className="link-button link-button--strong" href={`mailto:${item.email}`}>
+                <Mail aria-hidden="true" />
+                {item.email}
+              </a>
+            )}
+            <a className="link-button" href={item.profileUrl} target="_blank" rel="noreferrer">
+              <UserRound aria-hidden="true" />
+              官网/个人页
+            </a>
+            <a className="link-button" href={item.sourceUrl} target="_blank" rel="noreferrer">
+              <ExternalLink aria-hidden="true" />
+              数据来源
+            </a>
+          </div>
+        </div>
+      )}
+    </article>
+  );
+}
+
+function DirectionCard({ area }) {
+  const parsedMentors = area.mentors.map(parseMentor);
+  const partTimeCount = parsedMentors.filter((mentor) => mentor.partTime).length;
+
+  return (
+    <article className="direction-card">
+      <div className="direction-card__header">
+        <div>
+          <span>{area.group}</span>
+          <h3>{area.code} {area.name}</h3>
+        </div>
+        <div className="direction-card__count">
+          <strong>{area.mentors.length}</strong>
+          <span>导师</span>
+        </div>
+      </div>
+      <div className="direction-card__meta">
+        <Chip tone="green">全量纳入</Chip>
+        {partTimeCount > 0 && <Chip tone="amber">{partTimeCount} 位兼职导师</Chip>}
+      </div>
+      <div className="mentor-cloud">
+        {parsedMentors.map(({ name, partTime }) => (
+          <span key={`${area.code}-${name}`} className={partTime ? "mentor-pill mentor-pill--part-time" : "mentor-pill"}>
+            {name}{partTime ? " · 兼职" : ""}
+          </span>
+        ))}
+      </div>
+    </article>
   );
 }
 
@@ -340,6 +577,17 @@ export default function App() {
   const [searchQ, setSearchQ] = useState("");
   const [expanded, setExpanded] = useState(null);
   const [activeTab, setActiveTab] = useState("database");
+
+  const stats = useMemo(() => {
+    const partTimeCount = supervisors.filter((item) => item.tags.includes("兼职导师")).length;
+    const emailCount = supervisors.filter((item) => item.email).length;
+    return [
+      { label: "导师/师资记录", value: supervisors.length, icon: Users },
+      { label: "培养方向与索引", value: categories.length - 1, icon: Layers },
+      { label: "公开邮箱记录", value: emailCount, icon: Mail },
+      { label: "兼职导师标注", value: partTimeCount, icon: ClipboardCheck },
+    ];
+  }, []);
 
   const filtered = useMemo(() => {
     const query = searchQ.trim().toLowerCase();
@@ -363,184 +611,180 @@ export default function App() {
       .sort((a, b) => a.school.localeCompare(b.school, "zh-Hans-CN") || a.name.localeCompare(b.name, "zh-Hans-CN"));
   }, [catFilter, schoolFilter, searchQ]);
 
-  const tabStyle = (tab) => ({
-    padding: "8px 16px",
-    borderRadius: "var(--border-radius-md)",
-    border: activeTab === tab ? "1px solid var(--color-border-primary)" : "1px solid transparent",
-    background: activeTab === tab ? "var(--color-background-primary)" : "transparent",
-    color: activeTab === tab ? "var(--color-text-primary)" : "var(--color-text-secondary)",
-    cursor: "pointer",
-    fontSize: 14,
-    fontWeight: activeTab === tab ? 600 : 400,
-  });
+  const tabs = [
+    { id: "database", label: "导师索引", icon: Search },
+    { id: "directions", label: "培养方向", icon: GraduationCap },
+    { id: "sources", label: "来源与建议", icon: LinkIcon },
+  ];
 
   return (
-    <div style={{ padding: "2rem 20px", maxWidth: 880, margin: "0 auto" }}>
-      <h1 style={{ fontSize: 22, fontWeight: 650, margin: "0 0 6px" }}>北航生医工/医工两院导师信息索引</h1>
-      <p style={{ fontSize: 13, color: "var(--color-text-secondary)", margin: "0 0 1.4rem", lineHeight: 1.6 }}>
-        生物与医学工程学院 · 医学科学与工程学院 · 共 {supervisors.length} 条公开来源导师/师资记录
-      </p>
+    <main className="app-shell">
+      <section className="hero-panel">
+        <div className="hero-copy">
+          <span className="eyebrow">BUAA Biomedical Mentor Index</span>
+          <h1>北航生医工/医工两院导师信息索引</h1>
+          <p>
+            面向考研和保研择导的公开信息工作台。保留官网可核验来源，补充方向覆盖、联系入口、资料线索和联系前核验清单，帮助先缩小范围，再去官网确认细节。
+          </p>
+        </div>
+        <div className="hero-visual" aria-label="公开导师信息概览">
+          <div className="hero-visual__top">
+            <BarChart3 aria-hidden="true" />
+            <span>公开来源记录</span>
+          </div>
+          <strong>{supervisors.length}</strong>
+          <p>两院导师/师资索引</p>
+          <div className="hero-bars" aria-hidden="true">
+            <span style={{ height: "72%" }} />
+            <span style={{ height: "48%" }} />
+            <span style={{ height: "84%" }} />
+            <span style={{ height: "58%" }} />
+            <span style={{ height: "68%" }} />
+          </div>
+        </div>
+      </section>
 
-      <div style={{ display: "flex", gap: 8, marginBottom: 18, borderBottom: "1px solid var(--color-border-tertiary)", paddingBottom: 12, flexWrap: "wrap" }}>
-        <button type="button" style={tabStyle("database")} onClick={() => setActiveTab("database")}>导师索引</button>
-        <button type="button" style={tabStyle("directions")} onClick={() => setActiveTab("directions")}>培养方向</button>
-        <button type="button" style={tabStyle("sources")} onClick={() => setActiveTab("sources")}>来源与建议</button>
-      </div>
+      <section className="stat-grid" aria-label="数据概览">
+        {stats.map(({ label, value, icon: Icon }) => (
+          <div className="stat-card" key={label}>
+            <Icon aria-hidden="true" />
+            <div>
+              <strong>{value}</strong>
+              <span>{label}</span>
+            </div>
+          </div>
+        ))}
+      </section>
+
+      <nav className="tabs" aria-label="页面导航">
+        {tabs.map(({ id, label, icon: Icon }) => (
+          <button
+            key={id}
+            type="button"
+            className={activeTab === id ? "tab tab--active" : "tab"}
+            onClick={() => setActiveTab(id)}
+          >
+            <Icon aria-hidden="true" />
+            {label}
+          </button>
+        ))}
+      </nav>
 
       {activeTab === "database" && (
-        <>
+        <section className="content-section">
           <SourceNotice />
 
-          <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) minmax(150px, 220px) minmax(170px, 260px)", gap: 8, marginBottom: 12 }}>
-            <input
-              placeholder="搜索姓名、学院、方向、关键词"
-              value={searchQ}
-              onChange={(event) => setSearchQ(event.target.value)}
-              style={{ minWidth: 0 }}
-            />
-            <select value={schoolFilter} onChange={(event) => setSchoolFilter(event.target.value)}>
-              {schools.map((school) => <option key={school}>{school}</option>)}
-            </select>
-            <select value={catFilter} onChange={(event) => setCatFilter(event.target.value)}>
-              {categories.map((category) => <option key={category}>{category}</option>)}
-            </select>
+          <div className="filter-panel">
+            <div className="filter-panel__heading">
+              <div>
+                <Filter aria-hidden="true" />
+                <span>快速筛选</span>
+              </div>
+              <p>当前筛选结果：{filtered.length} 条</p>
+            </div>
+            <div className="filter-grid">
+              <label className="field field--search">
+                <span>关键词</span>
+                <div className="input-with-icon">
+                  <Search aria-hidden="true" />
+                  <input
+                    placeholder="搜索姓名、学院、方向、邮箱或关键词"
+                    value={searchQ}
+                    onChange={(event) => setSearchQ(event.target.value)}
+                  />
+                </div>
+              </label>
+              <label className="field">
+                <span>学院</span>
+                <select value={schoolFilter} onChange={(event) => setSchoolFilter(event.target.value)}>
+                  {schools.map((school) => <option key={school}>{school}</option>)}
+                </select>
+              </label>
+              <label className="field">
+                <span>方向/分类</span>
+                <select value={catFilter} onChange={(event) => setCatFilter(event.target.value)}>
+                  {categories.map((category) => <option key={category}>{category}</option>)}
+                </select>
+              </label>
+            </div>
           </div>
 
-          <p style={{ fontSize: 13, color: "var(--color-text-secondary)", margin: "0 0 12px" }}>当前筛选结果：{filtered.length} 条</p>
-
-          {filtered.map((item) => (
-            <div key={item.id} className="supervisor-card" style={{ marginBottom: 10, border: "1px solid var(--color-border-tertiary)", borderRadius: "var(--border-radius-lg)", overflow: "hidden", background: "var(--color-background-primary)" }}>
-              <button
-                type="button"
-                onClick={() => setExpanded(expanded === item.id ? null : item.id)}
-                style={{ width: "100%", padding: "13px 16px", border: 0, background: "transparent", textAlign: "left", cursor: "pointer", color: "inherit" }}
-              >
-                <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "flex-start" }}>
-                  <div style={{ minWidth: 0 }}>
-                    <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap", marginBottom: 7 }}>
-                      <span style={{ fontWeight: 650, fontSize: 16 }}>{item.name}</span>
-                      <span style={{ fontSize: 12, color: "var(--color-text-secondary)" }}>{item.title}</span>
-                      <span style={chipStyle(item.school === "医学科学与工程学院" ? "blue" : "green")}>{item.school}</span>
-                      {item.tags.map((tag) => <span key={tag} style={chipStyle(tag === "兼职导师" ? "amber" : "neutral")}>{tag}</span>)}
-                    </div>
-                    <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                      {(item.directions.length ? item.directions : item.categories).slice(0, 5).map((direction) => (
-                        <span key={direction} style={chipStyle()}>{direction}</span>
-                      ))}
-                      {(item.directions.length ? item.directions : item.categories).length > 5 && (
-                        <span style={{ fontSize: 12, color: "var(--color-text-tertiary)", padding: "3px 0" }}>+{(item.directions.length ? item.directions : item.categories).length - 5}</span>
-                      )}
-                    </div>
-                  </div>
-                  <span style={{ flexShrink: 0, color: "var(--color-text-tertiary)", fontSize: 18, lineHeight: 1 }}>{expanded === item.id ? "−" : "+"}</span>
-                </div>
-              </button>
-
-              {expanded === item.id && (
-                <div style={{ padding: "13px 16px 16px", background: "var(--color-background-secondary)", borderTop: "1px solid var(--color-border-tertiary)" }}>
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 12 }}>
-                    <div style={{ background: "var(--color-background-primary)", border: "1px solid var(--color-border-tertiary)", borderRadius: "var(--border-radius-md)", padding: "10px 12px" }}>
-                      <p style={{ margin: "0 0 5px", fontSize: 12, color: "var(--color-text-secondary)", fontWeight: 600 }}>来源</p>
-                      <p style={{ margin: 0, fontSize: 13, lineHeight: 1.6 }}>{item.source}</p>
-                    </div>
-                    <div style={{ background: "var(--color-background-primary)", border: "1px solid var(--color-border-tertiary)", borderRadius: "var(--border-radius-md)", padding: "10px 12px" }}>
-                      <p style={{ margin: "0 0 5px", fontSize: 12, color: "var(--color-text-secondary)", fontWeight: 600 }}>覆盖类别</p>
-                      <p style={{ margin: 0, fontSize: 13, lineHeight: 1.6 }}>{item.groups.join("、")}</p>
-                    </div>
-                  </div>
-
-                  <div style={{ marginBottom: 12 }}>
-                    <p style={{ margin: "0 0 6px", fontSize: 12, color: "var(--color-text-secondary)", fontWeight: 600 }}>公开方向/索引分类</p>
-                    <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                      {(item.directions.length ? item.directions : item.categories).map((direction) => (
-                        <span key={direction} style={chipStyle()}>{direction}</span>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                    {item.email && (
-                      <a href={`mailto:${item.email}`} style={{ ...linkButtonStyle(), color: "var(--color-text-primary)" }}>
-                        邮箱：{item.email}
-                      </a>
-                    )}
-                    <a href={item.profileUrl} target="_blank" rel="noreferrer" style={linkButtonStyle()}>
-                      官网/个人页
-                    </a>
-                    <a href={item.sourceUrl} target="_blank" rel="noreferrer" style={linkButtonStyle()}>
-                      数据来源
-                    </a>
-                  </div>
-                </div>
-              )}
-            </div>
-          ))}
-        </>
+          <div className="supervisor-list">
+            {filtered.map((item) => (
+              <SupervisorCard
+                key={item.id}
+                item={item}
+                expanded={expanded === item.id}
+                onToggle={() => setExpanded(expanded === item.id ? null : item.id)}
+              />
+            ))}
+          </div>
+        </section>
       )}
 
       {activeTab === "directions" && (
-        <div>
-          <SourceNotice />
-          {bmeDirections.map((area) => (
-            <div key={`${area.group}-${area.code}`} style={{ marginBottom: 12, padding: "14px 16px", border: "1px solid var(--color-border-tertiary)", borderRadius: "var(--border-radius-lg)", background: "var(--color-background-primary)" }}>
-              <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "baseline", marginBottom: 8 }}>
-                <p style={{ margin: 0, fontSize: 15, fontWeight: 650 }}>{area.code} {area.name}</p>
-                <span style={{ fontSize: 12, color: "var(--color-text-secondary)", flexShrink: 0 }}>{area.group} · {area.mentors.length} 人</span>
-              </div>
-              <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                {area.mentors.map((rawName) => {
-                  const { name, partTime } = parseMentor(rawName);
-                  return <span key={rawName} style={chipStyle(partTime ? "amber" : "neutral")}>{name}{partTime ? " · 兼职" : ""}</span>;
-                })}
-              </div>
-            </div>
-          ))}
-        </div>
+        <section className="content-section">
+          <SectionTitle eyebrow="培养方向" title="按官方方向查看导师池">
+            已恢复并保留生物力学、生物医学材料、细胞与组织工程等方向，方便按专业兴趣反向查找导师。
+          </SectionTitle>
+          <div className="direction-grid">
+            {bmeDirections.map((area) => <DirectionCard key={`${area.group}-${area.code}`} area={area} />)}
+          </div>
+        </section>
       )}
 
       {activeTab === "sources" && (
-        <div>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(230px, 1fr))", gap: 10, marginBottom: 20 }}>
+        <section className="content-section">
+          <SectionTitle eyebrow="来源与建议" title="把不确定信息留给官网复核">
+            页面只做公开信息索引和联系准备提示，不替代当年招生目录、学院通知或导师本人确认。
+          </SectionTitle>
+
+          <div className="source-grid">
             {sourceCards.map((source) => (
-              <a key={source.url} href={source.url} target="_blank" rel="noreferrer" style={{ display: "block", padding: "13px 15px", border: "1px solid var(--color-border-tertiary)", borderRadius: "var(--border-radius-lg)", background: "var(--color-background-primary)", textDecoration: "none", color: "inherit" }}>
-                <p style={{ margin: "0 0 6px", fontSize: 14, fontWeight: 650 }}>{source.title}</p>
-                <p style={{ margin: 0, fontSize: 12, color: "var(--color-text-secondary)", lineHeight: 1.7 }}>{source.desc}</p>
+              <a key={source.url} className="source-card" href={source.url} target="_blank" rel="noreferrer">
+                <div>
+                  <LinkIcon aria-hidden="true" />
+                  <h3>{source.title}</h3>
+                </div>
+                <p>{source.desc}</p>
+                <span>
+                  打开来源
+                  <ArrowUpRight aria-hidden="true" />
+                </span>
               </a>
             ))}
           </div>
 
-          {[
-            {
-              title: "联系导师前",
-              lines: [
-                "先用官网主页核对导师当前学院、职称、研究方向和联系方式，再阅读近两三篇代表性论文或课题组新闻。",
-                "简历中写清专业背景、课程/项目经历、科研或工程技能、希望申请的培养方向，不绑定任何特定奖项模板。",
-              ],
-            },
-            {
-              title: "套磁邮件",
-              lines: [
-                "主题建议使用：推免/考研咨询-姓名-本科院校-意向方向。",
-                "正文保持简短：自我介绍、为何关注该方向、已有能力与可投入时间、附件简历；避免群发痕迹。",
-              ],
-            },
-            {
-              title: "信息核验",
-              lines: [
-                "同名教师、跨学院任职、兼职导师和页面迁移都可能导致旧资料出错，最终以学院官网、北航教师个人主页和当年招生通知为准。",
-                "本页面不对导师作主观排名，也不展示无法公开核验的毕业风险、就业薪资或学生评价。",
-              ],
-            },
-          ].map((block) => (
-            <div key={block.title} style={{ marginBottom: 12, padding: "14px 16px", border: "1px solid var(--color-border-tertiary)", borderRadius: "var(--border-radius-lg)", background: "var(--color-background-primary)" }}>
-              <p style={{ margin: "0 0 8px", fontSize: 15, fontWeight: 650 }}>{block.title}</p>
-              {block.lines.map((line) => (
-                <p key={line} style={{ margin: "0 0 5px", fontSize: 13, color: "var(--color-text-secondary)", lineHeight: 1.7 }}>{line}</p>
+          <div className="advice-layout">
+            <div className="checklist-panel">
+              <div className="checklist-panel__title">
+                <SlidersHorizontal aria-hidden="true" />
+                <h3>联系前建议补充核验</h3>
+              </div>
+              <ul className="checklist">
+                {verificationChecklist.map((item) => (
+                  <li key={item}>
+                    <CheckCircle2 aria-hidden="true" />
+                    {item}
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            <div className="advice-cards">
+              {adviceBlocks.map(({ icon: Icon, title, lines }) => (
+                <article key={title} className="advice-card">
+                  <Icon aria-hidden="true" />
+                  <div>
+                    <h3>{title}</h3>
+                    {lines.map((line) => <p key={line}>{line}</p>)}
+                  </div>
+                </article>
               ))}
             </div>
-          ))}
-        </div>
+          </div>
+        </section>
       )}
-    </div>
+    </main>
   );
 }
