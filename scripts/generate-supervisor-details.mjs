@@ -13,11 +13,14 @@ const FETCH_PROFILE_DETAILS = process.env.BUAA_FETCH_PROFILES === "1";
 
 const URLS = {
   bmeTeachers: "https://bme.buaa.edu.cn/teachers.aspx?catID=7",
+  bmeShiTeachers: "https://shi.buaa.edu.cn/xyjslb.jsp?id=1144&lang=zh_CN&st=0&urltype=tsites.CollegeTeacherList&wbtreeid=1001",
   bmeMasterDirections: "https://bme.buaa.edu.cn/zhaopinHr.aspx?catID=9&curID=713&subcatID=40",
   bmePhd2026: "https://bme.buaa.edu.cn/newsInfo.aspx?catID=13&curID=14729&subcatID=1027",
   msePeople: "https://ygy.buaa.edu.cn/info/1022/3032.htm",
   mseDetail: "https://ygy.buaa.edu.cn/szdw1/szryxx.htm",
+  mseShiTeachers: "https://shi.buaa.edu.cn/xyjslb.jsp?id=1189&lang=zh_CN&st=0&urltype=tsites.CollegeTeacherList&wbtreeid=1001",
   msePhd2026: "https://ygy.buaa.edu.cn/info/1004/4492.htm",
+  shiTeacherSearch: "https://shi.buaa.edu.cn/system/resource/tsites/advancesearch.jsp",
 };
 
 const BME_BASE = "https://bme.buaa.edu.cn/";
@@ -119,10 +122,19 @@ function pickNames(details, names) {
   return Object.fromEntries(Object.entries(details).filter(([name]) => names.has(name)));
 }
 
+function getNamesMissingShiProfile(details, names) {
+  return Array.from(names).filter((name) => !details[name]?.profileUrl?.includes("shi.buaa.edu.cn"));
+}
+
 function cacheNameFor(url, prefix, name) {
   const digest = createHash("sha1").update(url).digest("hex").slice(0, 12);
   const safeName = name.replace(/[\\/:*?"<>|]/g, "_");
   return `${prefix}-${safeName}-${digest}.html`;
+}
+
+function cacheNameForName(prefix, name, extension = "html") {
+  const safeName = name.replace(/[\\/:*?"<>|]/g, "_");
+  return `${prefix}-${safeName}.${extension}`;
 }
 
 function decodeHtml(buffer) {
@@ -192,6 +204,173 @@ function parseBmeTeacherIndex(html) {
       tags: [],
     };
   });
+  return details;
+}
+
+function parseShiTeacherList(html, baseUrl) {
+  const $ = cheerio.load(html, { decodeEntities: true });
+  const details = {};
+  const addTeacher = (rawName, href, rawTitle) => {
+    const profileUrl = normalizeUrl(href, baseUrl);
+    if (!profileUrl?.includes("shi.buaa.edu.cn") || !profileUrl.includes("/zh_CN/index.htm")) return;
+    const name = cleanName(rawName);
+    if (!name || ["首页", "下页", "上页", "尾页"].includes(name)) return;
+    const title = cleanText(rawTitle);
+    details[name] ??= {
+      profileUrl,
+      sourceUrl: profileUrl,
+      title: title || undefined,
+      tags: getAdvisorTags(`${title} ${name}`),
+    };
+  };
+
+  for (const match of html.matchAll(/addimg\("[^"]*","([^"]+)","([^"]+)","[^"]*"\)/g)) {
+    addTeacher(match[2], match[1]);
+  }
+
+  $("a").each((_, el) => {
+    const text = cleanText($(el).text());
+    const name = cleanName(text.match(/^[\u4e00-\u9fa5]{2,4}/)?.[0]);
+    const title = cleanText(text.replace(name, ""));
+    addTeacher(name, $(el).attr("href"), title);
+  });
+  return details;
+}
+
+function getShiTeacherPageUrls(html, baseUrl) {
+  const $ = cheerio.load(html, { decodeEntities: true });
+  const urls = new Set([baseUrl]);
+  $("a").each((_, el) => {
+    const text = cleanText($(el).text());
+    const href = normalizeUrl($(el).attr("href"), baseUrl);
+    if (!href || !["首页", "上页", "下页", "尾页"].includes(text)) return;
+    if (href.includes("xyjslb.jsp") && href.includes("tsites.CollegeTeacherList")) urls.add(href);
+  });
+  for (const match of html.matchAll(/PAGENUM=(\d+)/g)) {
+    const page = Number(match[1]);
+    if (Number.isFinite(page) && page > 1) {
+      const url = new URL(baseUrl);
+      url.searchParams.set("PAGENUM", String(page));
+      urls.add(url.href);
+    }
+  }
+  const totalPage = Number(html.match(/totalpage=(\d+)/)?.[1] ?? "1");
+  if (Number.isFinite(totalPage) && totalPage > 1) {
+    for (let page = 2; page <= totalPage; page += 1) {
+      const url = new URL(baseUrl);
+      url.searchParams.set("PAGENUM", String(page));
+      url.searchParams.set("totalpage", String(totalPage));
+      urls.add(url.href);
+    }
+  }
+  return Array.from(urls).sort((a, b) => {
+    const pageOf = (url) => Number(new URL(url).searchParams.get("PAGENUM") ?? "1");
+    return pageOf(a) - pageOf(b);
+  });
+}
+
+async function getShiTeacherDetails(indexUrl, cachePrefix) {
+  const firstPage = await readOptionalUrl(indexUrl, `${cachePrefix}-shi-teachers-1.html`);
+  if (!firstPage) return {};
+  const pages = [{ html: firstPage, baseUrl: indexUrl }];
+  const pageUrls = getShiTeacherPageUrls(firstPage, indexUrl).slice(1);
+  for (const url of pageUrls) {
+    const page = new URL(url).searchParams.get("PAGENUM") ?? "1";
+    const html = await readOptionalUrl(url, `${cachePrefix}-shi-teachers-${page}.html`);
+    if (html) pages.push({ html, baseUrl: url });
+  }
+  return mergeDetails(...pages.map(({ html, baseUrl }) => parseShiTeacherList(html, baseUrl)));
+}
+
+function getShiSearchUrl(name) {
+  return getShiSearchPageUrl(name, 1);
+}
+
+function getShiSearchPageUrl(name, pageindex) {
+  const params = new URLSearchParams({
+    collegeid: "0",
+    disciplineid: "0",
+    enrollid: "0",
+    pageindex: String(pageindex),
+    pagesize: "12",
+    rankid: "0",
+    degreeid: "0",
+    honorid: "0",
+    pinyin: "",
+    profilelen: "100",
+    teacherName: name,
+    searchDirection: "",
+    viewmode: "8",
+    viewid: "1036809",
+    siteOwner: "1857672118",
+    viewUniqueId: "1036809",
+    showlang: "zh_CN",
+    ispreview: "false",
+    basenum: "0",
+    ellipsis: "...",
+    alignright: "false",
+    productType: "0",
+    tutorType: "",
+  });
+  return `${URLS.shiTeacherSearch}?${params}`;
+}
+
+function parseShiSearchResult(jsonTexts, name) {
+  const exactMatches = [];
+  for (const jsonText of jsonTexts) {
+    if (!jsonText) continue;
+    let data;
+    try {
+      data = JSON.parse(jsonText);
+    } catch {
+      continue;
+    }
+    exactMatches.push(
+      ...(data.teacherData ?? [])
+        .filter((item) => cleanName(item.showName) === name && item.url?.includes("/zh_CN/index.htm")),
+    );
+  }
+  const matchesByUrl = new Map(exactMatches.map((item) => [normalizeUrl(item.url, "https://shi.buaa.edu.cn/"), item]));
+  const matches = Array.from(matchesByUrl.entries()).filter(([url]) => url);
+  if (matches.length !== 1) return {};
+  const [profileUrl, match] = matches[0];
+  return {
+    [name]: {
+      profileUrl,
+      sourceUrl: profileUrl,
+      title: cleanText(match.prorank) || undefined,
+      tags: [],
+    },
+  };
+}
+
+function getTotalPage(jsonText) {
+  let data;
+  try {
+    data = JSON.parse(jsonText);
+  } catch {
+    return 1;
+  }
+  return Number(data.totalpage) || 1;
+}
+
+async function getShiSearchDetails(names) {
+  const details = {};
+  for (const name of names) {
+    const jsonTexts = [];
+    const firstJson = await readOptionalUrl(getShiSearchUrl(name), cacheNameForName("shi-search", name, "json"), 8000);
+    if (firstJson) jsonTexts.push(firstJson);
+    const totalPage = Math.min(getTotalPage(firstJson), 4);
+    for (let page = 2; page <= totalPage; page += 1) {
+      const jsonText = await readOptionalUrl(
+        getShiSearchPageUrl(name, page),
+        cacheNameForName(`shi-search-${page}`, name, "json"),
+        8000,
+      );
+      if (jsonText) jsonTexts.push(jsonText);
+    }
+    Object.assign(details, parseShiSearchResult(jsonTexts, name));
+  }
   return details;
 }
 
@@ -343,23 +522,32 @@ async function main() {
   const targetNames = getTargetNames(await fs.readFile(APP_SOURCE, "utf8"));
   const bmeTeacherHtml = await readOptionalUrl(URLS.bmeTeachers, "bme-teachers.html");
   const bmeTeachers = bmeTeacherHtml ? parseBmeTeacherIndex(bmeTeacherHtml) : {};
+  const bmeShiTeachers = await getShiTeacherDetails(URLS.bmeShiTeachers, "bme");
   const msePeopleHtml = await readOptionalUrl(URLS.msePeople, "mse-people.html");
   const msePeople = msePeopleHtml ? parseMseListLikePage(msePeopleHtml, URLS.msePeople) : {};
   const msePages = await getMseDetailPages();
   const mseDetails = mergeDetails(...msePages.map(({ html, baseUrl }) => parseMseListLikePage(html, baseUrl)));
+  const mseShiTeachers = await getShiTeacherDetails(URLS.mseShiTeachers, "mse");
+  const shiTeachers = mergeDetails(bmeShiTeachers, mseShiTeachers);
   await readOptionalUrl(URLS.msePhd2026, "mse-phd-2026.html");
   const bmePhdHtml = await readOptionalUrl(URLS.bmePhd2026, "bme-phd-2026.html");
   const admissions = mergeDetails(
     existing.admissions ?? {},
     bmePhdHtml ? parsePhdAdmissions(bmePhdHtml, URLS.bmePhd2026, targetNames.all) : {},
   );
+  const baseBmeDetails = pickNames(mergeDetails(existing.bme ?? {}, bmeTeachers, shiTeachers, admissions), targetNames.bme);
+  const baseMseDetails = pickNames(mergeDetails(existing.mse ?? {}, msePeople, mseDetails, shiTeachers, admissions), targetNames.mse);
+  const shiSearchTeachers = await getShiSearchDetails(new Set([
+    ...getNamesMissingShiProfile(baseBmeDetails, targetNames.bme),
+    ...getNamesMissingShiProfile(baseMseDetails, targetNames.mse),
+  ]));
 
   const bmeEnriched = await enrichProfiles(
-    pickNames(mergeDetails(existing.bme ?? {}, bmeTeachers), targetNames.bme),
+    pickNames(mergeDetails(baseBmeDetails, shiSearchTeachers), targetNames.bme),
     "bme",
   );
   const mseEnriched = await enrichProfiles(
-    pickNames(mergeDetails(existing.mse ?? {}, msePeople, mseDetails), targetNames.mse),
+    pickNames(mergeDetails(baseMseDetails, shiSearchTeachers), targetNames.mse),
     "mse",
   );
   const sortObject = (object) => Object.fromEntries(Object.entries(object).sort(([a], [b]) => a.localeCompare(b, "zh-Hans-CN")));
@@ -369,11 +557,14 @@ async function main() {
     admissions: sortObject(admissions),
     sources: {
       bmeTeachers: URLS.bmeTeachers,
+      bmeShiTeachers: URLS.bmeShiTeachers,
       bmeMasterDirections: URLS.bmeMasterDirections,
       bmePhd2026: URLS.bmePhd2026,
       msePeople: URLS.msePeople,
       mseDetail: URLS.mseDetail,
+      mseShiTeachers: URLS.mseShiTeachers,
       msePhd2026: URLS.msePhd2026,
+      shiTeacherSearch: URLS.shiTeacherSearch,
     },
   };
   const content = `// Auto-generated from public BUAA school pages. Run: npm run generate:details\nexport const supervisorDetails = ${JSON.stringify(supervisorDetails, null, 2)};\n`;

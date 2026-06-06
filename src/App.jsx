@@ -22,10 +22,13 @@ import { supervisorDetails } from "./supervisorDetails";
 
 const BME_SOURCE_URL = "https://bme.buaa.edu.cn/zhaopinHr.aspx?catID=9&curID=713&subcatID=40";
 const BME_TEACHERS_URL = "https://bme.buaa.edu.cn/teachers.aspx?catID=7";
+const BME_SHI_TEACHERS_URL = "https://shi.buaa.edu.cn/xyjslb.jsp?id=1144&lang=zh_CN&st=0&urltype=tsites.CollegeTeacherList&wbtreeid=1001";
 const BME_PHD_2026_URL = "https://bme.buaa.edu.cn/newsInfo.aspx?catID=13&curID=14729&subcatID=1027";
 const MSE_PEOPLE_URL = "https://ygy.buaa.edu.cn/info/1022/3032.htm";
 const MSE_DETAIL_URL = "https://ygy.buaa.edu.cn/szdw1/szryxx.htm";
+const MSE_SHI_TEACHERS_URL = "https://shi.buaa.edu.cn/xyjslb.jsp?id=1189&lang=zh_CN&st=0&urltype=tsites.CollegeTeacherList&wbtreeid=1001";
 const MSE_PHD_2026_URL = "https://ygy.buaa.edu.cn/info/1004/4492.htm";
+const SHI_TEACHER_SEARCH_URL = "https://shi.buaa.edu.cn/jssy.jsp?urltype=tree.TreeTempUrl&wbtreeid=1004";
 
 const bmeDirections = [
   {
@@ -227,6 +230,16 @@ function uniqueItems(items) {
   return Array.from(new Set(items.filter(Boolean)));
 }
 
+function uniqueAdmissions(items) {
+  const seen = new Set();
+  return items.filter((item) => {
+    const key = `${item?.label ?? ""}|${item?.sourceUrl ?? ""}`;
+    if (!item || seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
 function getTagTone(tag) {
   if (tag.includes("博士生导师")) return "blue";
   if (tag.includes("硕士生导师")) return "green";
@@ -242,7 +255,7 @@ function getSupplementalDetail(schoolKey, name) {
     ...detail,
     email: detail.email ?? admission.email,
     tags: uniqueItems([...(detail.tags ?? []), ...(admission.tags ?? [])]),
-    admissions: [...(detail.admissions ?? []), ...(admission.admissions ?? [])],
+    admissions: uniqueAdmissions([...(detail.admissions ?? []), ...(admission.admissions ?? [])]),
   };
 }
 
@@ -335,6 +348,11 @@ const sourceCards = [
     url: BME_TEACHERS_URL,
   },
   {
+    title: "北航生医工教师主页",
+    desc: "北航教师主页系统中的生物与医学工程学院教师列表，优先用于精确个人主页入口。",
+    url: BME_SHI_TEACHERS_URL,
+  },
+  {
     title: "2026博士资格名单",
     desc: "医工交叉学科群 2026 年第一批具有博士生招生资格的导师名单。",
     url: BME_PHD_2026_URL,
@@ -350,9 +368,19 @@ const sourceCards = [
     url: MSE_DETAIL_URL,
   },
   {
+    title: "北航医学院教师主页",
+    desc: "北航教师主页系统中的医学院教师列表，用于补充医工学院师资个人主页入口。",
+    url: MSE_SHI_TEACHERS_URL,
+  },
+  {
     title: "2026博士招生方案",
     desc: "医学科学与工程学院发布的医工交叉学科群 2026 年博士研究生招生工作方案。",
     url: MSE_PHD_2026_URL,
+  },
+  {
+    title: "北航教师主页索引",
+    desc: "按姓名检索北航教师主页系统；同名教师和跨院任职需进一步核验。",
+    url: SHI_TEACHER_SEARCH_URL,
   },
 ];
 

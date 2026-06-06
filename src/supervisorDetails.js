@@ -2,21 +2,27 @@
 export const supervisorDetails = {
   "bme": {
     "陈建安": {
-      "profileUrl": "http://shi.buaa.edu.cn/chenjianan/zh_CN/index.htm",
-      "sourceUrl": "https://shi.buaa.edu.cn/chenjianan/zh_CN/index/6158/list/index.htm",
+      "profileUrl": "https://shi.buaa.edu.cn/chenjianan/zh_CN/index.htm",
+      "sourceUrl": "https://shi.buaa.edu.cn/chenjianan/zh_CN/index.htm",
       "tags": [
         "硕士生导师",
         "博士生导师"
       ],
       "title": "副教授",
       "email": "09738@buaa.edu.cn",
-      "admissions": []
+      "admissions": [
+        {
+          "label": "2026博士招生资格名单线索",
+          "sourceUrl": "https://bme.buaa.edu.cn/newsInfo.aspx?catID=13&curID=14729&subcatID=1027"
+        }
+      ]
     },
     "陈晓芳": {
-      "profileUrl": "https://bme.buaa.edu.cn/teacherInfo.aspx?catID=7&subcatID=140&curID=1732",
-      "sourceUrl": "https://bme.buaa.edu.cn/teacherInfo.aspx?catID=7&subcatID=140&curID=1732",
+      "profileUrl": "https://shi.buaa.edu.cn/chenxiaofang/zh_CN/index.htm",
+      "sourceUrl": "https://shi.buaa.edu.cn/chenxiaofang/zh_CN/index.htm",
       "tags": [],
-      "admissions": []
+      "admissions": [],
+      "title": "副教授"
     },
     "邓小燕": {
       "profileUrl": "https://bme.buaa.edu.cn/teacherInfo.aspx?catID=7&subcatID=35&curID=297",
@@ -30,14 +36,23 @@ export const supervisorDetails = {
       "admissions": []
     },
     "丁立": {
-      "profileUrl": "http://bme.buaa.edu.cn/teacherInfo.aspx?catID=7&subcatID=140&curID=313",
-      "sourceUrl": "http://bme.buaa.edu.cn/teacherInfo.aspx?catID=7&subcatID=140&curID=313",
-      "tags": [],
-      "admissions": []
+      "profileUrl": "https://shi.buaa.edu.cn/dingli/zh_CN/index.htm",
+      "sourceUrl": "https://shi.buaa.edu.cn/dingli/zh_CN/index.htm",
+      "tags": [
+        "博士生导师"
+      ],
+      "admissions": [
+        {
+          "label": "2026博士招生资格名单线索",
+          "sourceUrl": "https://bme.buaa.edu.cn/newsInfo.aspx?catID=13&curID=14729&subcatID=1027"
+        }
+      ],
+      "title": "教授",
+      "email": "ding1971316@buaa.edu.cn"
     },
     "樊瑜波": {
-      "profileUrl": "https://bme.buaa.edu.cn/teacherInfo.aspx?catID=7&subcatID=35&curID=246",
-      "sourceUrl": "https://bme.buaa.edu.cn/teacherInfo.aspx?catID=7&subcatID=35&curID=246",
+      "profileUrl": "https://shi.buaa.edu.cn/fanyubo/zh_CN/index.htm",
+      "sourceUrl": "https://shi.buaa.edu.cn/fanyubo/zh_CN/index.htm",
       "tags": [
         "博士生导师"
       ],
@@ -46,13 +61,14 @@ export const supervisorDetails = {
       "admissions": []
     },
     "付玉明": {
-      "profileUrl": "http://bme.buaa.edu.cn/teacherInfo.aspx?catID=7&subcatID=141&curID=1718",
-      "sourceUrl": "http://bme.buaa.edu.cn/teacherInfo.aspx?catID=7&subcatID=141&curID=1718",
+      "profileUrl": "https://shi.buaa.edu.cn/fuyuming/zh_CN/index.htm",
+      "sourceUrl": "https://shi.buaa.edu.cn/fuyuming/zh_CN/index.htm",
       "tags": [],
-      "admissions": []
+      "admissions": [],
+      "title": "副教授"
     },
     "宫赫": {
-      "profileUrl": "http://shi.buaa.edu.cn/gonghe1/zh_CN/index.htm",
+      "profileUrl": "https://shi.buaa.edu.cn/gonghe1/zh_CN/index.htm",
       "sourceUrl": "https://shi.buaa.edu.cn/gonghe1/zh_CN/index.htm",
       "tags": [
         "硕士生导师",
@@ -61,13 +77,19 @@ export const supervisorDetails = {
       "title": "教授",
       "email": "bmegonghe@buaa.edu.cn",
       "researchSummary": "国家自然科学基金优秀青年科学基金项目资助，入选2012年度教育部新世纪优秀人才支持计划，2019年获得中国力学学会全国徐芝纶力学优秀教师奖",
-      "admissions": []
+      "admissions": [
+        {
+          "label": "2026博士招生资格名单线索",
+          "sourceUrl": "https://bme.buaa.edu.cn/newsInfo.aspx?catID=13&curID=14729&subcatID=1027"
+        }
+      ]
     },
     "贡向辉": {
-      "profileUrl": "https://bme.buaa.edu.cn/teacherInfo.aspx?catID=7&subcatID=141&curID=299",
-      "sourceUrl": "https://bme.buaa.edu.cn/teacherInfo.aspx?catID=7&subcatID=141&curID=299",
+      "profileUrl": "https://shi.buaa.edu.cn/gongxianghui/zh_CN/index.htm",
+      "sourceUrl": "https://shi.buaa.edu.cn/gongxianghui/zh_CN/index.htm",
       "tags": [],
-      "admissions": []
+      "admissions": [],
+      "title": "副教授"
     },
     "顾雪楠": {
       "profileUrl": "http://bme.buaa.edu.cn/teacherInfo.aspx?catID=7&subcatID=141&curID=1132",
@@ -75,11 +97,19 @@ export const supervisorDetails = {
       "tags": [],
       "admissions": []
     },
-    "胡大伟": {
-      "profileUrl": "https://bme.buaa.edu.cn/teacherInfo.aspx?catID=7&subcatID=141&curID=393",
-      "sourceUrl": "https://bme.buaa.edu.cn/teacherInfo.aspx?catID=7&subcatID=141&curID=393",
+    "韩龙柱": {
+      "profileUrl": "https://shi.buaa.edu.cn/hanlongzhu/zh_CN/index.htm",
+      "sourceUrl": "https://shi.buaa.edu.cn/hanlongzhu/zh_CN/index.htm",
+      "title": "副研究员",
       "tags": [],
       "admissions": []
+    },
+    "胡大伟": {
+      "profileUrl": "https://shi.buaa.edu.cn/hudawei/zh_CN/index.htm",
+      "sourceUrl": "https://shi.buaa.edu.cn/hudawei/zh_CN/index.htm",
+      "tags": [],
+      "admissions": [],
+      "title": "副教授"
     },
     "黄艳": {
       "profileUrl": "http://shi.buaa.edu.cn/huangyan/zh_CN/index.htm",
@@ -99,22 +129,40 @@ export const supervisorDetails = {
       "admissions": []
     },
     "贾潇凌": {
-      "profileUrl": "http://bme.buaa.edu.cn/teacherInfo.aspx?catID=7&subcatID=140&curID=1772",
-      "sourceUrl": "http://bme.buaa.edu.cn/teacherInfo.aspx?catID=7&subcatID=140&curID=1772",
+      "profileUrl": "https://shi.buaa.edu.cn/jiazuoling/zh_CN/index.htm",
+      "sourceUrl": "https://shi.buaa.edu.cn/jiazuoling/zh_CN/index.htm",
       "tags": [],
-      "admissions": []
+      "admissions": [],
+      "title": "副教授"
     },
     "李德玉": {
       "profileUrl": "https://bme.buaa.edu.cn/teacherInfo.aspx?catID=7&subcatID=35&curID=388",
       "sourceUrl": "https://bme.buaa.edu.cn/teacherInfo.aspx?catID=7&subcatID=35&curID=388",
-      "tags": [],
-      "admissions": []
+      "tags": [
+        "博士生导师"
+      ],
+      "admissions": [
+        {
+          "label": "2026博士招生资格名单线索",
+          "sourceUrl": "https://bme.buaa.edu.cn/newsInfo.aspx?catID=13&curID=14729&subcatID=1027"
+        }
+      ],
+      "email": "deyuli@buaa.edu.cn"
     },
     "李萍": {
-      "profileUrl": "https://bme.buaa.edu.cn/teacherInfo.aspx?catID=7&subcatID=35&curID=316",
-      "sourceUrl": "https://bme.buaa.edu.cn/teacherInfo.aspx?catID=7&subcatID=35&curID=316",
-      "tags": [],
-      "admissions": []
+      "profileUrl": "https://shi.buaa.edu.cn/liping/zh_CN/index.htm",
+      "sourceUrl": "https://shi.buaa.edu.cn/liping/zh_CN/index.htm",
+      "tags": [
+        "博士生导师"
+      ],
+      "admissions": [
+        {
+          "label": "2026博士招生资格名单线索",
+          "sourceUrl": "https://bme.buaa.edu.cn/newsInfo.aspx?catID=13&curID=14729&subcatID=1027"
+        }
+      ],
+      "title": "教授",
+      "email": "liping@buaa.edu.cn"
     },
     "李淑宇": {
       "profileUrl": "http://bme.buaa.edu.cn/teacherInfo.aspx?catID=7&subcatID=140&curID=394",
@@ -133,8 +181,8 @@ export const supervisorDetails = {
       "admissions": []
     },
     "李晓明": {
-      "profileUrl": "http://shi.buaa.edu.cn/lixiaoming/zh_CN/index.htm",
-      "sourceUrl": "https://shi.buaa.edu.cn/lixiaoming/zh_CN/index/5976/list/index.htm",
+      "profileUrl": "https://shi.buaa.edu.cn/lixiaoming/zh_CN/index.htm",
+      "sourceUrl": "https://shi.buaa.edu.cn/lixiaoming/zh_CN/index.htm",
       "tags": [
         "硕士生导师",
         "博士生导师"
@@ -142,19 +190,33 @@ export const supervisorDetails = {
       "title": "教授",
       "email": "lixm@buaa.edu.cn",
       "researchSummary": "、国家重点研发计划等10余项纵向国家及省部级科研项目，获授权国家发明专利10余项",
-      "admissions": []
+      "admissions": [
+        {
+          "label": "2026博士招生资格名单线索",
+          "sourceUrl": "https://bme.buaa.edu.cn/newsInfo.aspx?catID=13&curID=14729&subcatID=1027"
+        }
+      ]
     },
     "李艳": {
-      "profileUrl": "https://bme.buaa.edu.cn/teacherInfo.aspx?catID=7&subcatID=141&curID=714",
-      "sourceUrl": "https://bme.buaa.edu.cn/teacherInfo.aspx?catID=7&subcatID=141&curID=714",
+      "profileUrl": "https://shi.buaa.edu.cn/liyan1/zh_CN/index.htm",
+      "sourceUrl": "https://shi.buaa.edu.cn/liyan1/zh_CN/index.htm",
       "tags": [],
-      "admissions": []
+      "admissions": [],
+      "title": "讲师"
     },
     "刘海峰": {
       "profileUrl": "https://bme.buaa.edu.cn/teacherInfo.aspx?catID=7&subcatID=35&curID=265",
       "sourceUrl": "https://bme.buaa.edu.cn/teacherInfo.aspx?catID=7&subcatID=35&curID=265",
-      "tags": [],
-      "admissions": []
+      "tags": [
+        "博士生导师"
+      ],
+      "admissions": [
+        {
+          "label": "2026博士招生资格名单线索",
+          "sourceUrl": "https://bme.buaa.edu.cn/newsInfo.aspx?catID=13&curID=14729&subcatID=1027"
+        }
+      ],
+      "email": "haifengliu@buaa.edu.cn"
     },
     "刘红": {
       "profileUrl": "https://shi.buaa.edu.cn/liuhong/zh_CN/index.htm",
@@ -164,35 +226,69 @@ export const supervisorDetails = {
         "博士生导师"
       ],
       "title": "教授",
-      "admissions": []
+      "admissions": [
+        {
+          "label": "2026博士招生资格名单线索",
+          "sourceUrl": "https://bme.buaa.edu.cn/newsInfo.aspx?catID=13&curID=14729&subcatID=1027"
+        }
+      ],
+      "email": "lh64@buaa.edu.cn"
     },
     "刘美丽": {
-      "profileUrl": "http://bme.buaa.edu.cn/teacherInfo.aspx?catID=7&subcatID=140&curID=5700",
-      "sourceUrl": "http://bme.buaa.edu.cn/teacherInfo.aspx?catID=7&subcatID=140&curID=5700",
+      "profileUrl": "https://shi.buaa.edu.cn/liumeili/zh_CN/index.htm",
+      "sourceUrl": "https://shi.buaa.edu.cn/liumeili/zh_CN/index.htm",
       "tags": [],
-      "admissions": []
+      "admissions": [],
+      "title": "副教授"
     },
     "刘涛": {
-      "profileUrl": "https://bme.buaa.edu.cn/teacherInfo.aspx?catID=7&subcatID=35&curID=14032",
-      "sourceUrl": "https://bme.buaa.edu.cn/teacherInfo.aspx?catID=7&subcatID=35&curID=14032",
-      "tags": [],
-      "admissions": []
+      "profileUrl": "https://shi.buaa.edu.cn/TaoLiu/zh_CN/index.htm",
+      "sourceUrl": "https://shi.buaa.edu.cn/TaoLiu/zh_CN/index.htm",
+      "tags": [
+        "博士生导师"
+      ],
+      "admissions": [
+        {
+          "label": "2026博士招生资格名单线索",
+          "sourceUrl": "https://bme.buaa.edu.cn/newsInfo.aspx?catID=13&curID=14729&subcatID=1027"
+        }
+      ],
+      "title": "教授",
+      "email": "tao.liu@buaa.edu.cn"
     },
     "刘文勇": {
-      "profileUrl": "http://bme.buaa.edu.cn/teacherInfo.aspx?catID=7&subcatID=141&curID=423",
-      "sourceUrl": "http://bme.buaa.edu.cn/teacherInfo.aspx?catID=7&subcatID=141&curID=423",
-      "tags": [],
-      "admissions": []
+      "profileUrl": "https://shi.buaa.edu.cn/liuwenyong/zh_CN/index.htm",
+      "sourceUrl": "https://shi.buaa.edu.cn/liuwenyong/zh_CN/index.htm",
+      "tags": [
+        "博士生导师"
+      ],
+      "admissions": [
+        {
+          "label": "2026博士招生资格名单线索",
+          "sourceUrl": "https://bme.buaa.edu.cn/newsInfo.aspx?catID=13&curID=14729&subcatID=1027"
+        }
+      ],
+      "title": "副教授",
+      "email": "wyliu@buaa.edu.cn"
     },
     "刘肖": {
-      "profileUrl": "https://bme.buaa.edu.cn/teacherInfo.aspx?catID=7&subcatID=35&curID=14301",
-      "sourceUrl": "https://bme.buaa.edu.cn/teacherInfo.aspx?catID=7&subcatID=35&curID=14301",
-      "tags": [],
-      "admissions": []
+      "profileUrl": "https://shi.buaa.edu.cn/liuxiao/zh_CN/index.htm",
+      "sourceUrl": "https://shi.buaa.edu.cn/liuxiao/zh_CN/index.htm",
+      "tags": [
+        "博士生导师"
+      ],
+      "admissions": [
+        {
+          "label": "2026博士招生资格名单线索",
+          "sourceUrl": "https://bme.buaa.edu.cn/newsInfo.aspx?catID=13&curID=14729&subcatID=1027"
+        }
+      ],
+      "title": "教授",
+      "email": "liuxiao@buaa.edu.cn"
     },
     "刘笑宇": {
-      "profileUrl": "http://shi.buaa.edu.cn/liuxiaoyu/zh_CN/index.htm",
-      "sourceUrl": "https://shi.buaa.edu.cn/liuxiaoyu/zh_CN/index/5534/list/",
+      "profileUrl": "https://shi.buaa.edu.cn/liuxiaoyu/zh_CN/index.htm",
+      "sourceUrl": "https://shi.buaa.edu.cn/liuxiaoyu/zh_CN/index.htm",
       "tags": [
         "硕士生导师",
         "博士生导师"
@@ -200,47 +296,90 @@ export const supervisorDetails = {
       "title": "教授",
       "email": "x.y.liu@buaa.edu.cn",
       "researchSummary": "国家自然科学基金项目（青年1项、面上3项）、北京市自然科学基金项目2项（重点项目1项、前言项目1项），及部级特区专项等",
-      "admissions": []
+      "admissions": [
+        {
+          "label": "2026博士招生资格名单线索",
+          "sourceUrl": "https://bme.buaa.edu.cn/newsInfo.aspx?catID=13&curID=14729&subcatID=1027"
+        }
+      ]
     },
     "柳忠起": {
-      "profileUrl": "http://bme.buaa.edu.cn/teacherInfo.aspx?catID=7&subcatID=141&curID=422",
-      "sourceUrl": "http://bme.buaa.edu.cn/teacherInfo.aspx?catID=7&subcatID=141&curID=422",
+      "profileUrl": "https://shi.buaa.edu.cn/liuzhongqi/zh_CN/index.htm",
+      "sourceUrl": "https://shi.buaa.edu.cn/liuzhongqi/zh_CN/index.htm",
       "tags": [],
-      "admissions": []
+      "admissions": [],
+      "title": "讲师"
     },
     "牛海军": {
-      "profileUrl": "https://bme.buaa.edu.cn/teacherInfo.aspx?catID=7&subcatID=35&curID=14037",
-      "sourceUrl": "https://bme.buaa.edu.cn/teacherInfo.aspx?catID=7&subcatID=35&curID=14037",
-      "tags": [],
-      "admissions": []
+      "profileUrl": "https://shi.buaa.edu.cn/niuhaijun/zh_CN/index.htm",
+      "sourceUrl": "https://shi.buaa.edu.cn/niuhaijun/zh_CN/index.htm",
+      "tags": [
+        "博士生导师"
+      ],
+      "admissions": [
+        {
+          "label": "2026博士招生资格名单线索",
+          "sourceUrl": "https://bme.buaa.edu.cn/newsInfo.aspx?catID=13&curID=14729&subcatID=1027"
+        }
+      ],
+      "title": "教授",
+      "email": "hjniu@buaa.edu.cn"
     },
     "牛旭锋": {
-      "profileUrl": "https://bme.buaa.edu.cn/teacherInfo.aspx?catID=7&subcatID=140&curID=420",
-      "sourceUrl": "https://bme.buaa.edu.cn/teacherInfo.aspx?catID=7&subcatID=140&curID=420",
-      "tags": [],
-      "admissions": []
+      "profileUrl": "https://shi.buaa.edu.cn/niuxufeng/zh_CN/index.htm",
+      "sourceUrl": "https://shi.buaa.edu.cn/niuxufeng/zh_CN/index.htm",
+      "tags": [
+        "博士生导师"
+      ],
+      "admissions": [
+        {
+          "label": "2026博士招生资格名单线索",
+          "sourceUrl": "https://bme.buaa.edu.cn/newsInfo.aspx?catID=13&curID=14729&subcatID=1027"
+        }
+      ],
+      "title": "教授",
+      "email": "nxf@buaa.edu.cn"
     },
     "裴葆青": {
-      "profileUrl": "https://bme.buaa.edu.cn/teacherInfo.aspx?catID=7&subcatID=35&curID=317",
-      "sourceUrl": "https://bme.buaa.edu.cn/teacherInfo.aspx?catID=7&subcatID=35&curID=317",
-      "tags": [],
-      "admissions": []
+      "profileUrl": "https://shi.buaa.edu.cn/peizuoqing/zh_CN/index.htm",
+      "sourceUrl": "https://shi.buaa.edu.cn/peizuoqing/zh_CN/index.htm",
+      "tags": [
+        "博士生导师"
+      ],
+      "admissions": [
+        {
+          "label": "2026博士招生资格名单线索",
+          "sourceUrl": "https://bme.buaa.edu.cn/newsInfo.aspx?catID=13&curID=14729&subcatID=1027"
+        }
+      ],
+      "title": "教授",
+      "email": "pbq@buaa.edu.cn"
     },
     "蒲放": {
-      "profileUrl": "https://bme.buaa.edu.cn/teacherInfo.aspx?catID=7&subcatID=35&curID=298",
-      "sourceUrl": "https://bme.buaa.edu.cn/teacherInfo.aspx?catID=7&subcatID=35&curID=298",
-      "tags": [],
-      "admissions": []
+      "profileUrl": "https://shi.buaa.edu.cn/pufang/zh_CN/index.htm",
+      "sourceUrl": "https://shi.buaa.edu.cn/pufang/zh_CN/index.htm",
+      "tags": [
+        "博士生导师"
+      ],
+      "admissions": [
+        {
+          "label": "2026博士招生资格名单线索",
+          "sourceUrl": "https://bme.buaa.edu.cn/newsInfo.aspx?catID=13&curID=14729&subcatID=1027"
+        }
+      ],
+      "title": "教授",
+      "email": "pufangbme@buaa.edu.cn"
     },
     "乔惠婷": {
-      "profileUrl": "http://bme.buaa.edu.cn/teacherInfo.aspx?catID=7&subcatID=141&curID=418",
-      "sourceUrl": "http://bme.buaa.edu.cn/teacherInfo.aspx?catID=7&subcatID=141&curID=418",
+      "profileUrl": "https://shi.buaa.edu.cn/qiaohuizuo/zh_CN/index.htm",
+      "sourceUrl": "https://shi.buaa.edu.cn/qiaohuizuo/zh_CN/index.htm",
       "tags": [],
-      "admissions": []
+      "admissions": [],
+      "title": "副教授"
     },
     "荣龙": {
-      "profileUrl": "https://bme.buaa.edu.cn/teacherInfo.aspx?catID=7&subcatID=35&curID=308",
-      "sourceUrl": "https://bme.buaa.edu.cn/teacherInfo.aspx?catID=7&subcatID=35&curID=308",
+      "profileUrl": "https://shi.buaa.edu.cn/ronglong/zh_CN/index.htm",
+      "sourceUrl": "https://shi.buaa.edu.cn/ronglong/zh_CN/index.htm",
       "tags": [
         "博士生导师"
       ],
@@ -273,13 +412,19 @@ export const supervisorDetails = {
       "admissions": []
     },
     "孙联文": {
-      "profileUrl": "https://bme.buaa.edu.cn/teacherInfo.aspx?catID=7&subcatID=35&curID=312",
-      "sourceUrl": "https://bme.buaa.edu.cn/teacherInfo.aspx?catID=7&subcatID=35&curID=312",
+      "profileUrl": "https://shi.buaa.edu.cn/sunlianwen/zh_CN/index.htm",
+      "sourceUrl": "https://shi.buaa.edu.cn/sunlianwen/zh_CN/index.htm",
       "tags": [
         "博士生导师"
       ],
       "title": "教授",
-      "admissions": []
+      "admissions": [
+        {
+          "label": "2026博士招生资格名单线索",
+          "sourceUrl": "https://bme.buaa.edu.cn/newsInfo.aspx?catID=13&curID=14729&subcatID=1027"
+        }
+      ],
+      "email": "sunlw@buaa.edu.cn"
     },
     "孙艳": {
       "profileUrl": "https://bme.buaa.edu.cn/teacherInfo.aspx?catID=7&subcatID=140&curID=296",
@@ -287,17 +432,33 @@ export const supervisorDetails = {
       "tags": [],
       "admissions": []
     },
+    "陶春静": {
+      "profileUrl": "https://shi.buaa.edu.cn/taochunjing/zh_CN/index.htm",
+      "sourceUrl": "https://shi.buaa.edu.cn/taochunjing/zh_CN/index.htm",
+      "tags": [
+        "博士生导师"
+      ],
+      "admissions": [
+        {
+          "label": "2026博士招生资格名单线索",
+          "sourceUrl": "https://bme.buaa.edu.cn/newsInfo.aspx?catID=13&curID=14729&subcatID=1027"
+        }
+      ],
+      "email": "chunjingtao@buaa.edu.cn"
+    },
     "万涛": {
-      "profileUrl": "https://bme.buaa.edu.cn/teacherInfo.aspx?catID=7&subcatID=141&curID=1833",
-      "sourceUrl": "https://bme.buaa.edu.cn/teacherInfo.aspx?catID=7&subcatID=141&curID=1833",
+      "profileUrl": "https://shi.buaa.edu.cn/wantao/zh_CN/index.htm",
+      "sourceUrl": "https://shi.buaa.edu.cn/wantao/zh_CN/index.htm",
       "tags": [],
-      "admissions": []
+      "admissions": [],
+      "title": "副教授"
     },
     "汪待发": {
-      "profileUrl": "http://bme.buaa.edu.cn/teacherInfo.aspx?catID=7&subcatID=141&curID=527",
-      "sourceUrl": "http://bme.buaa.edu.cn/teacherInfo.aspx?catID=7&subcatID=141&curID=527",
+      "profileUrl": "https://shi.buaa.edu.cn/wangdaifa/zh_CN/index.htm",
+      "sourceUrl": "https://shi.buaa.edu.cn/wangdaifa/zh_CN/index.htm",
       "tags": [],
-      "admissions": []
+      "admissions": [],
+      "title": "副教授"
     },
     "王江雪": {
       "profileUrl": "http://bme.buaa.edu.cn/teacherInfo.aspx?catID=7&subcatID=141&curID=390",
@@ -306,10 +467,19 @@ export const supervisorDetails = {
       "admissions": []
     },
     "王丽珍": {
-      "profileUrl": "https://bme.buaa.edu.cn/teacherInfo.aspx?catID=7&subcatID=35&curID=1599",
-      "sourceUrl": "https://bme.buaa.edu.cn/teacherInfo.aspx?catID=7&subcatID=35&curID=1599",
-      "tags": [],
-      "admissions": []
+      "profileUrl": "https://shi.buaa.edu.cn/wanglizhen/zh_CN/index.htm",
+      "sourceUrl": "https://shi.buaa.edu.cn/wanglizhen/zh_CN/index.htm",
+      "tags": [
+        "博士生导师"
+      ],
+      "admissions": [
+        {
+          "label": "2026博士招生资格名单线索",
+          "sourceUrl": "https://bme.buaa.edu.cn/newsInfo.aspx?catID=13&curID=14729&subcatID=1027"
+        }
+      ],
+      "title": "教授",
+      "email": "lizhenwang@buaa.edu.cn"
     },
     "王玲": {
       "profileUrl": "https://bme.buaa.edu.cn/teacherInfo.aspx?catID=7&subcatID=141&curID=722",
@@ -324,46 +494,92 @@ export const supervisorDetails = {
       "admissions": []
     },
     "谢倍珍": {
-      "profileUrl": "http://bme.buaa.edu.cn/teacherInfo.aspx?catID=7&subcatID=140&curID=506",
-      "sourceUrl": "http://bme.buaa.edu.cn/teacherInfo.aspx?catID=7&subcatID=140&curID=506",
+      "profileUrl": "https://shi.buaa.edu.cn/xiebeizhen/zh_CN/index.htm",
+      "sourceUrl": "https://shi.buaa.edu.cn/xiebeizhen/zh_CN/index.htm",
       "tags": [],
-      "admissions": []
+      "admissions": [],
+      "title": "副教授"
     },
     "许燕": {
-      "profileUrl": "https://bme.buaa.edu.cn/teacherInfo.aspx?catID=7&subcatID=35&curID=487",
-      "sourceUrl": "https://bme.buaa.edu.cn/teacherInfo.aspx?catID=7&subcatID=35&curID=487",
-      "tags": [],
-      "admissions": []
+      "profileUrl": "https://shi.buaa.edu.cn/xuyan/zh_CN/index.htm",
+      "sourceUrl": "https://shi.buaa.edu.cn/xuyan/zh_CN/index.htm",
+      "tags": [
+        "博士生导师"
+      ],
+      "admissions": [
+        {
+          "label": "2026博士招生资格名单线索",
+          "sourceUrl": "https://bme.buaa.edu.cn/newsInfo.aspx?catID=13&curID=14729&subcatID=1027"
+        }
+      ],
+      "title": "教授",
+      "email": "xuyan@buaa.edu.cn"
+    },
+    "姚杰": {
+      "profileUrl": "https://shi.buaa.edu.cn/yaojie/zh_CN/index.htm",
+      "sourceUrl": "https://shi.buaa.edu.cn/yaojie/zh_CN/index.htm",
+      "title": "副教授",
+      "tags": [
+        "博士生导师"
+      ],
+      "admissions": [
+        {
+          "label": "2026博士招生资格名单线索",
+          "sourceUrl": "https://bme.buaa.edu.cn/newsInfo.aspx?catID=13&curID=14729&subcatID=1027"
+        }
+      ],
+      "email": "yaojie@buaa.edu.cn"
     },
     "易宗春": {
-      "profileUrl": "https://bme.buaa.edu.cn/teacherInfo.aspx?catID=7&subcatID=140&curID=314",
-      "sourceUrl": "https://bme.buaa.edu.cn/teacherInfo.aspx?catID=7&subcatID=140&curID=314",
+      "profileUrl": "https://shi.buaa.edu.cn/yizongchun/zh_CN/index.htm",
+      "sourceUrl": "https://shi.buaa.edu.cn/yizongchun/zh_CN/index.htm",
       "tags": [],
-      "admissions": []
+      "admissions": [],
+      "title": "副教授"
     },
     "岳蜀华": {
-      "profileUrl": "https://bme.buaa.edu.cn/teacherInfo.aspx?catID=7&subcatID=35&curID=14076",
-      "sourceUrl": "https://bme.buaa.edu.cn/teacherInfo.aspx?catID=7&subcatID=35&curID=14076",
-      "tags": [],
-      "admissions": []
+      "profileUrl": "https://shi.buaa.edu.cn/yueshuhua/zh_CN/index.htm",
+      "sourceUrl": "https://shi.buaa.edu.cn/yueshuhua/zh_CN/index.htm",
+      "tags": [
+        "博士生导师"
+      ],
+      "admissions": [
+        {
+          "label": "2026博士招生资格名单线索",
+          "sourceUrl": "https://bme.buaa.edu.cn/newsInfo.aspx?catID=13&curID=14729&subcatID=1027"
+        }
+      ],
+      "title": "教授",
+      "email": "yue_shuhua@buaa.edu.cn"
     },
     "张弛": {
-      "profileUrl": "https://bme.buaa.edu.cn/teacherInfo.aspx?catID=7&subcatID=140&curID=2091",
-      "sourceUrl": "https://bme.buaa.edu.cn/teacherInfo.aspx?catID=7&subcatID=140&curID=2091",
+      "profileUrl": "http://shi.buaa.edu.cn/chizhang/zh_CN/index.htm",
+      "sourceUrl": "http://shi.buaa.edu.cn/chizhang/zh_CN/index.htm",
       "tags": [],
-      "admissions": []
+      "admissions": [],
+      "title": "研究员"
     },
     "张冀聪": {
-      "profileUrl": "https://bme.buaa.edu.cn/teacherInfo.aspx?catID=7&subcatID=35&curID=1849",
-      "sourceUrl": "https://bme.buaa.edu.cn/teacherInfo.aspx?catID=7&subcatID=35&curID=1849",
-      "tags": [],
-      "admissions": []
+      "profileUrl": "https://shi.buaa.edu.cn/zhangjicong/zh_CN/index.htm",
+      "sourceUrl": "https://shi.buaa.edu.cn/zhangjicong/zh_CN/index.htm",
+      "tags": [
+        "博士生导师"
+      ],
+      "admissions": [
+        {
+          "label": "2026博士招生资格名单线索",
+          "sourceUrl": "https://bme.buaa.edu.cn/newsInfo.aspx?catID=13&curID=14729&subcatID=1027"
+        }
+      ],
+      "title": "教授",
+      "email": "jicongzhang@buaa.edu.cn"
     },
     "赵峰": {
-      "profileUrl": "http://bme.buaa.edu.cn/teacherInfo.aspx?catID=7&subcatID=141&curID=403",
-      "sourceUrl": "http://bme.buaa.edu.cn/teacherInfo.aspx?catID=7&subcatID=141&curID=403",
+      "profileUrl": "http://shi.buaa.edu.cn/zhaofeng1/zh_CN/index.htm",
+      "sourceUrl": "http://shi.buaa.edu.cn/zhaofeng1/zh_CN/index.htm",
       "tags": [],
-      "admissions": []
+      "admissions": [],
+      "title": "副教授"
     },
     "郑诚功": {
       "profileUrl": "http://bme.buaa.edu.cn/teacherInfo.aspx?catID=7&subcatID=35&curID=1243",
@@ -376,10 +592,19 @@ export const supervisorDetails = {
       "admissions": []
     },
     "郑丽沙": {
-      "profileUrl": "https://bme.buaa.edu.cn/teacherInfo.aspx?catID=7&subcatID=35&curID=229",
-      "sourceUrl": "https://bme.buaa.edu.cn/teacherInfo.aspx?catID=7&subcatID=35&curID=229",
-      "tags": [],
-      "admissions": []
+      "profileUrl": "https://shi.buaa.edu.cn/zhenglisha/zh_CN/index.htm",
+      "sourceUrl": "https://shi.buaa.edu.cn/zhenglisha/zh_CN/index.htm",
+      "tags": [
+        "博士生导师"
+      ],
+      "admissions": [
+        {
+          "label": "2026博士招生资格名单线索",
+          "sourceUrl": "https://bme.buaa.edu.cn/newsInfo.aspx?catID=13&curID=14729&subcatID=1027"
+        }
+      ],
+      "title": "教授",
+      "email": "lishazheng@buaa.edu.cn"
     },
     "周钢": {
       "profileUrl": "https://bme.buaa.edu.cn/teacherInfo.aspx?catID=7&subcatID=141&curID=373",
@@ -388,29 +613,39 @@ export const supervisorDetails = {
       "admissions": []
     },
     "周前祥": {
-      "profileUrl": "https://bme.buaa.edu.cn/teacherInfo.aspx?catID=7&subcatID=35&curID=1691",
-      "sourceUrl": "https://bme.buaa.edu.cn/teacherInfo.aspx?catID=7&subcatID=35&curID=1691",
+      "profileUrl": "https://shi.buaa.edu.cn/zhouqianxiang/zh_CN/index.htm",
+      "sourceUrl": "https://shi.buaa.edu.cn/zhouqianxiang/zh_CN/index.htm",
       "tags": [
         "博士生导师"
       ],
       "title": "教授",
       "email": "zqxg@buaa.edu.cn",
-      "admissions": []
+      "admissions": [
+        {
+          "label": "2026博士招生资格名单线索",
+          "sourceUrl": "https://bme.buaa.edu.cn/newsInfo.aspx?catID=13&curID=14729&subcatID=1027"
+        }
+      ]
     }
   },
   "mse": {
     "安羽": {
-      "sourceUrl": "https://ygy.buaa.edu.cn/info/1156/3035.htm",
+      "sourceUrl": "https://shi.buaa.edu.cn/anyu/zh_CN/index.htm",
       "tags": [
         "博士生导师"
       ],
-      "admissions": [],
+      "admissions": [
+        {
+          "label": "2026博士招生资格名单线索",
+          "sourceUrl": "https://bme.buaa.edu.cn/newsInfo.aspx?catID=13&curID=14729&subcatID=1027"
+        }
+      ],
       "title": "副研究员",
       "email": "yuan1989@buaa.edu.cn",
       "profileUrl": "https://shi.buaa.edu.cn/anyu/zh_CN/index.htm"
     },
     "蔡荣": {
-      "sourceUrl": "https://ygy.buaa.edu.cn/info/1156/3074.htm",
+      "sourceUrl": "https://shi.buaa.edu.cn/cairong6187/zh_CN/index.htm",
       "tags": [
         "硕士生导师",
         "博士生导师"
@@ -418,23 +653,37 @@ export const supervisorDetails = {
       "admissions": [],
       "title": "讲师、硕士生导师、博士生导师",
       "email": "cairong@buaa.edu.cn",
-      "profileUrl": "http://shi.buaa.edu.cn/cairong6187/zh_CN/index.htm",
+      "profileUrl": "https://shi.buaa.edu.cn/cairong6187/zh_CN/index.htm",
       "researchSummary": "【教育背景】[1]神经退行性疾病（帕金森病、阿尔茨海默病等）的发病机制研究及相关临床药物的开发[2]钙离子超载相关疾病中细胞死亡分子机制研究[3]脑能量代谢[4]磁纳米粒子成像技术（MPI）"
     },
     "曹芳芳": {
-      "sourceUrl": "https://ygy.buaa.edu.cn/info/1156/4358.htm",
+      "sourceUrl": "https://shi.buaa.edu.cn/caofangfang/zh_CN/index.htm",
       "tags": [
         "博士生导师"
       ],
-      "admissions": [],
+      "admissions": [
+        {
+          "label": "2026博士招生资格名单线索",
+          "sourceUrl": "https://bme.buaa.edu.cn/newsInfo.aspx?catID=13&curID=14729&subcatID=1027"
+        }
+      ],
       "title": "教授、博士生导师",
       "email": "fangfangcao@buaa.edu.cn",
       "profileUrl": "https://shi.buaa.edu.cn/caofangfang/zh_CN/index.htm"
     },
     "常凌乾": {
-      "sourceUrl": "https://ygy.buaa.edu.cn/info/1087/4350.htm",
-      "tags": [],
-      "admissions": []
+      "sourceUrl": "https://shi.buaa.edu.cn/lingqianchang/zh_CN/index.htm",
+      "tags": [
+        "博士生导师"
+      ],
+      "admissions": [
+        {
+          "label": "2026博士招生资格名单线索",
+          "sourceUrl": "https://bme.buaa.edu.cn/newsInfo.aspx?catID=13&curID=14729&subcatID=1027"
+        }
+      ],
+      "profileUrl": "https://shi.buaa.edu.cn/lingqianchang/zh_CN/index.htm",
+      "email": "lingqianchang@buaa.edu.cn"
     },
     "陈传宏": {
       "sourceUrl": "https://ygy.buaa.edu.cn/info/1156/3081.htm",
@@ -443,35 +692,50 @@ export const supervisorDetails = {
       "title": "研究员"
     },
     "陈军歌": {
-      "sourceUrl": "https://ygy.buaa.edu.cn/info/1156/3073.htm",
+      "sourceUrl": "https://shi.buaa.edu.cn/chenjg19/zh_CN/index.htm",
       "tags": [
         "博士生导师"
       ],
-      "admissions": [],
+      "admissions": [
+        {
+          "label": "2026博士招生资格名单线索",
+          "sourceUrl": "https://bme.buaa.edu.cn/newsInfo.aspx?catID=13&curID=14729&subcatID=1027"
+        }
+      ],
       "title": "副教授、博士生导师",
       "email": "chenjg19@buaa.edu.cn",
-      "profileUrl": "http://shi.buaa.edu.cn/chenjg19/zh_CN/index.htm",
+      "profileUrl": "https://shi.buaa.edu.cn/chenjg19/zh_CN/index.htm",
       "researchSummary": "工程化外泌体，智能药物递送，微纳机器人，肿瘤精准诊疗，皮肤损伤修复"
     },
     "陈伟": {
-      "sourceUrl": "https://ygy.buaa.edu.cn/info/1156/3085.htm",
+      "sourceUrl": "https://shi.buaa.edu.cn/chenwei3/zh_CN/index.htm",
       "tags": [
         "博士生导师"
       ],
-      "admissions": [],
+      "admissions": [
+        {
+          "label": "2026博士招生资格名单线索",
+          "sourceUrl": "https://bme.buaa.edu.cn/newsInfo.aspx?catID=13&curID=14729&subcatID=1027"
+        }
+      ],
       "title": "副研究员",
       "email": "chenw123@buaa.edu.cn",
       "profileUrl": "https://shi.buaa.edu.cn/chenwei3/zh_CN/index.htm"
     },
     "陈行": {
-      "sourceUrl": "https://ygy.buaa.edu.cn/info/1156/3088.htm",
+      "sourceUrl": "https://shi.buaa.edu.cn/xingc/zh_CN/index.htm",
       "tags": [
         "博士生导师"
       ],
-      "admissions": [],
+      "admissions": [
+        {
+          "label": "2026博士招生资格名单线索",
+          "sourceUrl": "https://bme.buaa.edu.cn/newsInfo.aspx?catID=13&curID=14729&subcatID=1027"
+        }
+      ],
       "title": "副教授、博士生导师",
       "email": "xingc@buaa.edu.cn",
-      "profileUrl": "http://shi.buaa.edu.cn/xingc"
+      "profileUrl": "https://shi.buaa.edu.cn/xingc/zh_CN/index.htm"
     },
     "陈珣": {
       "sourceUrl": "https://ygy.buaa.edu.cn/info/1156/3403.htm",
@@ -491,51 +755,67 @@ export const supervisorDetails = {
       "tags": [
         "博士生导师"
       ],
-      "admissions": []
+      "admissions": [
+        {
+          "label": "2026博士招生资格名单线索",
+          "sourceUrl": "https://bme.buaa.edu.cn/newsInfo.aspx?catID=13&curID=14729&subcatID=1027"
+        }
+      ]
     },
     "程健": {
-      "title": "副研究员",
-      "sourceUrl": "https://ygy.buaa.edu.cn/info/1156/2292.htm",
+      "title": "副教授",
+      "sourceUrl": "http://shi.buaa.edu.cn/jiancheng/zh_CN/index.htm",
       "tags": [
         "硕士生导师",
         "博士生导师"
       ],
-      "admissions": []
+      "admissions": [],
+      "profileUrl": "http://shi.buaa.edu.cn/jiancheng/zh_CN/index.htm"
     },
     "丁希丽": {
-      "sourceUrl": "https://ygy.buaa.edu.cn/info/1156/3078.htm",
+      "sourceUrl": "https://shi.buaa.edu.cn/dingxili1/zh_CN/index.htm",
       "tags": [
         "博士生导师"
       ],
-      "admissions": [],
+      "admissions": [
+        {
+          "label": "2026博士招生资格名单线索",
+          "sourceUrl": "https://bme.buaa.edu.cn/newsInfo.aspx?catID=13&curID=14729&subcatID=1027"
+        }
+      ],
       "title": "副教授、博士生导师",
-      "email": "xiliding@buaa.edu.cn"
+      "email": "xiliding@buaa.edu.cn",
+      "profileUrl": "https://shi.buaa.edu.cn/dingxili1/zh_CN/index.htm"
     },
     "董再再": {
-      "sourceUrl": "https://ygy.buaa.edu.cn/info/1156/3414.htm",
+      "sourceUrl": "https://shi.buaa.edu.cn/dongzaizai1/zh_CN/index.htm",
       "tags": [
         "硕士生导师"
       ],
       "admissions": [],
       "title": "助理教授、硕士生导师",
-      "email": "dongzaizai@buaa.edu.cn"
+      "email": "dongzaizai@buaa.edu.cn",
+      "profileUrl": "https://shi.buaa.edu.cn/dongzaizai1/zh_CN/index.htm"
     },
     "樊瑜波": {
-      "sourceUrl": "https://ygy.buaa.edu.cn/info/1087/2592.htm",
+      "sourceUrl": "https://shi.buaa.edu.cn/fanyubo/zh_CN/index.htm",
       "tags": [],
-      "admissions": []
+      "admissions": [],
+      "profileUrl": "https://shi.buaa.edu.cn/fanyubo/zh_CN/index.htm",
+      "title": "教授"
     },
     "付博": {
-      "title": "师资人员",
+      "title": "副教授",
       "email": "fubo10@buaa.edu.cn",
-      "sourceUrl": "https://ygy.buaa.edu.cn/info/1156/3052.htm",
+      "sourceUrl": "http://shi.buaa.edu.cn/bofu/zh_CN/index.htm",
       "tags": [
         "博士生导师"
       ],
-      "admissions": []
+      "admissions": [],
+      "profileUrl": "http://shi.buaa.edu.cn/bofu/zh_CN/index.htm"
     },
     "高明": {
-      "sourceUrl": "https://ygy.buaa.edu.cn/info/1156/3043.htm",
+      "sourceUrl": "https://shi.buaa.edu.cn/gaoming/zh_CN/index.htm",
       "tags": [
         "硕士生导师",
         "博士生导师"
@@ -547,15 +827,20 @@ export const supervisorDetails = {
       "researchSummary": "[1] 人体体液蛋白标志物超灵敏检测系统构建[2] 体外诊断检验试剂的研发..."
     },
     "高元明": {
-      "sourceUrl": "https://ygy.buaa.edu.cn/info/1156/3076.htm",
+      "sourceUrl": "https://shi.buaa.edu.cn/gaoyuanming/zh_CN/index.htm",
       "tags": [
         "硕士生导师",
         "博士生导师"
       ],
-      "admissions": [],
+      "admissions": [
+        {
+          "label": "2026博士招生资格名单线索",
+          "sourceUrl": "https://bme.buaa.edu.cn/newsInfo.aspx?catID=13&curID=14729&subcatID=1027"
+        }
+      ],
       "title": "讲师、硕士生导师、博士生导师",
       "email": "yuanminggao@buaa.edu.cn",
-      "profileUrl": "http://shi.buaa.edu.cn/gaoyuanming/zh_CN/index.htm"
+      "profileUrl": "https://shi.buaa.edu.cn/gaoyuanming/zh_CN/index.htm"
     },
     "关鑫宇": {
       "sourceUrl": "https://ygy.buaa.edu.cn/info/1156/3083.htm",
@@ -588,12 +873,13 @@ export const supervisorDetails = {
     "郝飞": {
       "title": "讲师、硕士生导师",
       "email": "haofei@buaa.edu.cn",
-      "sourceUrl": "https://ygy.buaa.edu.cn/info/1156/3822.htm",
+      "sourceUrl": "https://shi.buaa.edu.cn/haofei2/zh_CN/index.htm",
       "tags": [
         "硕士生导师"
       ],
       "researchSummary": "1. 中枢神经损伤修复（脊髓损伤、脑卒中等）2. ...",
-      "admissions": []
+      "admissions": [],
+      "profileUrl": "https://shi.buaa.edu.cn/haofei2/zh_CN/index.htm"
     },
     "贺子龙": {
       "sourceUrl": "https://ygy.buaa.edu.cn/info/1156/3054.htm",
@@ -608,39 +894,56 @@ export const supervisorDetails = {
     "洪维礼": {
       "title": "副研究员",
       "email": "weilihong@buaa.edu.cn",
-      "profileUrl": "http://shi.buaa.edu.cn/weilihong",
-      "sourceUrl": "https://ygy.buaa.edu.cn/info/1156/3094.htm",
+      "profileUrl": "https://shi.buaa.edu.cn/weilihong/zh_CN/index.htm",
+      "sourceUrl": "https://shi.buaa.edu.cn/weilihong/zh_CN/index.htm",
       "tags": [
         "博士生导师"
       ],
       "admissions": []
     },
     "胡贵平": {
-      "sourceUrl": "https://ygy.buaa.edu.cn/info/1156/3044.htm",
+      "sourceUrl": "https://shi.buaa.edu.cn/hgpbh2019/zh_CN/index.htm",
       "tags": [
         "博士生导师"
       ],
-      "admissions": [],
+      "admissions": [
+        {
+          "label": "2026博士招生资格名单线索",
+          "sourceUrl": "https://bme.buaa.edu.cn/newsInfo.aspx?catID=13&curID=14729&subcatID=1027"
+        }
+      ],
       "title": "副教授、博士生导师",
       "email": "hu_hgp@buaa.edu.cn",
       "profileUrl": "https://shi.buaa.edu.cn/hgpbh2019/zh_CN/index.htm",
       "researchSummary": "面上项目、国家自然科学基金青年项..."
     },
     "胡靓": {
-      "title": "副研究员",
-      "sourceUrl": "https://ygy.buaa.edu.cn/info/1156/1552.htm",
+      "title": "副教授",
+      "sourceUrl": "http://shi.buaa.edu.cn/huliang1226/zh_CN/index.htm",
       "tags": [
         "博士生导师"
       ],
       "researchSummary": "国家自然科学基金。2010年和2015年于浙江大学分别获得生物医学工程工学学士和博士学位",
-      "admissions": []
+      "admissions": [
+        {
+          "label": "2026博士招生资格名单线索",
+          "sourceUrl": "https://bme.buaa.edu.cn/newsInfo.aspx?catID=13&curID=14729&subcatID=1027"
+        }
+      ],
+      "email": "cnhuliang@buaa.edu.cn",
+      "profileUrl": "http://shi.buaa.edu.cn/huliang1226/zh_CN/index.htm"
     },
     "胡中韬": {
       "sourceUrl": "https://ygy.buaa.edu.cn/info/1156/4214.htm",
       "tags": [
         "博士生导师"
       ],
-      "admissions": [],
+      "admissions": [
+        {
+          "label": "2026博士招生资格名单线索",
+          "sourceUrl": "https://bme.buaa.edu.cn/newsInfo.aspx?catID=13&curID=14729&subcatID=1027"
+        }
+      ],
       "title": "副教授、博士生导师",
       "email": "zhongtaohu@buaa.edu.cn",
       "profileUrl": "https://shi.buaa.edu.cn/huzhongtao/zh_CN/index/204493/list/index.htm"
@@ -650,33 +953,44 @@ export const supervisorDetails = {
       "tags": [
         "博士生导师"
       ],
-      "admissions": [],
+      "admissions": [
+        {
+          "label": "2026博士招生资格名单线索",
+          "sourceUrl": "https://bme.buaa.edu.cn/newsInfo.aspx?catID=13&curID=14729&subcatID=1027"
+        }
+      ],
       "title": "副教授、博士生导师",
       "email": "jingyingjiang@buaa.edu.cn",
       "profileUrl": "https://shi.buaa.edu.cn/jiangjingying/zh_CN/index.htm"
     },
     "李安然": {
-      "sourceUrl": "https://ygy.buaa.edu.cn/info/1156/2902.htm",
+      "sourceUrl": "https://shi.buaa.edu.cn/lianran168/zh_CN/index.htm",
       "tags": [
         "博士生导师"
       ],
-      "admissions": [],
+      "admissions": [
+        {
+          "label": "2026博士招生资格名单线索",
+          "sourceUrl": "https://bme.buaa.edu.cn/newsInfo.aspx?catID=13&curID=14729&subcatID=1027"
+        }
+      ],
       "title": "副教授、博士生导师",
       "email": "rananli@buaa.edu.cn",
-      "profileUrl": "http://shi.buaa.edu.cn/lianran168/zh_CN/index.htm"
+      "profileUrl": "https://shi.buaa.edu.cn/lianran168/zh_CN/index.htm"
     },
     "李呈": {
-      "sourceUrl": "https://ygy.buaa.edu.cn/info/1156/3079.htm",
+      "sourceUrl": "https://shi.buaa.edu.cn/lc10664/zh_CN/index.htm",
       "tags": [
         "博士生导师"
       ],
       "admissions": [],
       "title": "讲师、博士生导师",
       "email": "li_cheng@buaa.edu.cn",
-      "researchSummary": "(1) 纳米材料用于肿瘤、心血管疾病诊疗的创新技术(2) 生物标志物的智能检测(3) 纳米生物光子学主..."
+      "researchSummary": "(1) 纳米材料用于肿瘤、心血管疾病诊疗的创新技术(2) 生物标志物的智能检测(3) 纳米生物光子学主...",
+      "profileUrl": "https://shi.buaa.edu.cn/lc10664/zh_CN/index.htm"
     },
     "李春燕": {
-      "sourceUrl": "https://ygy.buaa.edu.cn/info/1156/2383.htm",
+      "sourceUrl": "https://shi.buaa.edu.cn/chunyanli/zh_CN/index.htm",
       "tags": [
         "博士生导师"
       ],
@@ -686,56 +1000,70 @@ export const supervisorDetails = {
       "profileUrl": "https://shi.buaa.edu.cn/chunyanli/zh_CN/index.htm"
     },
     "李建超": {
-      "sourceUrl": "https://ygy.buaa.edu.cn/info/1156/3098.htm",
+      "sourceUrl": "https://shi.buaa.edu.cn/lijianchao/zh_CN/index.htm",
       "tags": [
         "硕士生导师"
       ],
       "admissions": [],
       "title": "副教授、硕士生导师",
       "email": "lijianchao@buaa.edu.cn",
-      "researchSummary": "心脏电生理、血流动力学和心肺康复关键技术研究..."
+      "researchSummary": "心脏电生理、血流动力学和心肺康复关键技术研究...",
+      "profileUrl": "https://shi.buaa.edu.cn/lijianchao/zh_CN/index.htm"
     },
     "李介博": {
       "title": "副研究员、博导",
       "email": "jiebo39@buaa.edu.cn",
-      "sourceUrl": "https://ygy.buaa.edu.cn/info/1156/3092.htm",
+      "sourceUrl": "https://shi.buaa.edu.cn/jieboli/zh_CN/index.htm",
       "tags": [
         "博士生导师"
       ],
       "researchSummary": "主要从事植介入医疗器械的激光制造，...",
-      "admissions": []
+      "admissions": [
+        {
+          "label": "2026博士招生资格名单线索",
+          "sourceUrl": "https://bme.buaa.edu.cn/newsInfo.aspx?catID=13&curID=14729&subcatID=1027"
+        }
+      ],
+      "profileUrl": "https://shi.buaa.edu.cn/jieboli/zh_CN/index.htm"
     },
     "李阳": {
-      "sourceUrl": "https://ygy.buaa.edu.cn/info/1087/4444.htm",
+      "sourceUrl": "http://shi.buaa.edu.cn/liyang/zh_CN/index.htm",
       "tags": [],
-      "admissions": []
+      "admissions": [],
+      "profileUrl": "http://shi.buaa.edu.cn/liyang/zh_CN/index.htm",
+      "title": "教授"
     },
     "李长剑": {
-      "sourceUrl": "https://ygy.buaa.edu.cn/info/1156/3452.htm",
+      "sourceUrl": "https://shi.buaa.edu.cn/lichangjian/zh_CN/index.htm",
       "tags": [
         "硕士生导师"
       ],
       "admissions": [],
       "title": "助理教授、硕士生导师",
       "email": "lichangjian@buaa.edu.cn",
-      "profileUrl": "https://shi.buaa.edu.cn/lichangjian/zh_CN/index/194927/list/index.htm"
+      "profileUrl": "https://shi.buaa.edu.cn/lichangjian/zh_CN/index.htm"
     },
     "林绪波": {
-      "sourceUrl": "https://ygy.buaa.edu.cn/info/1156/1532.htm",
+      "sourceUrl": "https://shi.buaa.edu.cn/linxubo/zh_CN/index.htm",
       "tags": [
         "博士生导师"
       ],
       "admissions": [],
       "title": "副教授、博士生导师",
       "email": "linxbseu@buaa.edu.cn",
-      "profileUrl": "https://shi.buaa.edu.cn/linxubo"
+      "profileUrl": "https://shi.buaa.edu.cn/linxubo/zh_CN/index.htm"
     },
     "刘超": {
-      "sourceUrl": "https://ygy.buaa.edu.cn/info/1156/3084.htm",
+      "sourceUrl": "https://shi.buaa.edu.cn/proteomics/zh_CN/index.htm",
       "tags": [
         "博士生导师"
       ],
-      "admissions": [],
+      "admissions": [
+        {
+          "label": "2026博士招生资格名单线索",
+          "sourceUrl": "https://bme.buaa.edu.cn/newsInfo.aspx?catID=13&curID=14729&subcatID=1027"
+        }
+      ],
       "title": "副教授、博士生导师",
       "email": "liuchaobuaa@buaa.edu.cn",
       "profileUrl": "https://shi.buaa.edu.cn/proteomics/zh_CN/index.htm"
@@ -743,24 +1071,35 @@ export const supervisorDetails = {
     "刘慧": {
       "title": "副研究员",
       "email": "liuhui87@buaa.edu.cn",
-      "profileUrl": "http://shi.buaa.edu.cn/lh10734/zh_CN/index.htm",
-      "sourceUrl": "https://ygy.buaa.edu.cn/info/1156/3095.htm",
+      "profileUrl": "https://shi.buaa.edu.cn/lh10734/zh_CN/index.htm",
+      "sourceUrl": "https://shi.buaa.edu.cn/lh10734/zh_CN/index.htm",
       "tags": [
         "博士生导师"
       ],
-      "admissions": []
+      "admissions": [
+        {
+          "label": "2026博士招生资格名单线索",
+          "sourceUrl": "https://bme.buaa.edu.cn/newsInfo.aspx?catID=13&curID=14729&subcatID=1027"
+        }
+      ]
     },
     "刘建刚": {
-      "sourceUrl": "https://ygy.buaa.edu.cn/info/1156/3100.htm",
+      "sourceUrl": "https://shi.buaa.edu.cn/liujiangang/zh_CN/index.htm",
       "tags": [
         "博士生导师"
       ],
-      "admissions": [],
+      "admissions": [
+        {
+          "label": "2026博士招生资格名单线索",
+          "sourceUrl": "https://bme.buaa.edu.cn/newsInfo.aspx?catID=13&curID=14729&subcatID=1027"
+        }
+      ],
       "title": "教授、博士生导师",
-      "email": "jgliu@buaa.edu.cn"
+      "email": "jgliu@buaa.edu.cn",
+      "profileUrl": "https://shi.buaa.edu.cn/liujiangang/zh_CN/index.htm"
     },
     "刘婍": {
-      "sourceUrl": "https://ygy.buaa.edu.cn/info/1156/3422.htm",
+      "sourceUrl": "https://shi.buaa.edu.cn/liuqi/zh_CN/index.htm",
       "tags": [
         "硕士生导师",
         "博士生导师"
@@ -772,21 +1111,33 @@ export const supervisorDetails = {
     },
     "刘晓冬": {
       "title": "研究员",
-      "sourceUrl": "https://ygy.buaa.edu.cn/info/1156/1531.htm",
+      "sourceUrl": "https://shi.buaa.edu.cn/liuxiaodong/zh_CN/index.htm",
       "tags": [
         "博士生导师"
       ],
-      "admissions": []
+      "admissions": [
+        {
+          "label": "2026博士招生资格名单线索",
+          "sourceUrl": "https://bme.buaa.edu.cn/newsInfo.aspx?catID=13&curID=14729&subcatID=1027"
+        }
+      ],
+      "profileUrl": "https://shi.buaa.edu.cn/liuxiaodong/zh_CN/index.htm",
+      "email": "liu-lab@buaa.edu.cn"
     },
     "刘卓": {
-      "sourceUrl": "https://ygy.buaa.edu.cn/info/1156/3423.htm",
+      "sourceUrl": "https://shi.buaa.edu.cn/liuzhuo/zh_CN/index.htm",
       "tags": [
         "博士生导师"
       ],
-      "admissions": [],
+      "admissions": [
+        {
+          "label": "2026博士招生资格名单线索",
+          "sourceUrl": "https://bme.buaa.edu.cn/newsInfo.aspx?catID=13&curID=14729&subcatID=1027"
+        }
+      ],
       "title": "副教授、博士生导师",
       "email": "liuzhuo@buaa.edu.cn",
-      "profileUrl": "http://shi.buaa.edu.cn/liuzhuo",
+      "profileUrl": "https://shi.buaa.edu.cn/liuzhuo/zh_CN/index.htm",
       "researchSummary": "1. 植介入生物电子器件：微创介入式心血管疾病诊疗装置，植入式神经..."
     },
     "刘子钰": {
@@ -799,16 +1150,22 @@ export const supervisorDetails = {
       "email": "liu_ziyu@buaa.edu.cn"
     },
     "马青川": {
-      "sourceUrl": "https://ygy.buaa.edu.cn/info/1156/3406.htm",
+      "sourceUrl": "https://shi.buaa.edu.cn/maqingchuan/zh_CN/index.htm",
       "tags": [
         "博士生导师"
       ],
-      "admissions": [],
+      "admissions": [
+        {
+          "label": "2026博士招生资格名单线索",
+          "sourceUrl": "https://bme.buaa.edu.cn/newsInfo.aspx?catID=13&curID=14729&subcatID=1027"
+        }
+      ],
       "title": "副教授、博士生导师",
-      "email": "maqingchuan@buaa.edu.cn"
+      "email": "maqingchuan@buaa.edu.cn",
+      "profileUrl": "https://shi.buaa.edu.cn/maqingchuan/zh_CN/index.htm"
     },
     "牟玮": {
-      "sourceUrl": "https://ygy.buaa.edu.cn/info/1156/3424.htm",
+      "sourceUrl": "https://shi.buaa.edu.cn/muwei/zh_CN/index.htm",
       "tags": [
         "博士生导师"
       ],
@@ -818,13 +1175,14 @@ export const supervisorDetails = {
       "profileUrl": "https://shi.buaa.edu.cn/muwei/zh_CN/index.htm"
     },
     "任韦燕": {
-      "sourceUrl": "https://ygy.buaa.edu.cn/info/1156/3453.htm",
+      "sourceUrl": "https://shi.buaa.edu.cn/renweiyan/zh_CN/index.htm",
       "tags": [
         "博士生导师"
       ],
       "admissions": [],
       "title": "副教授、博士生导师",
-      "email": "renweiyan@buaa.edu.cn"
+      "email": "renweiyan@buaa.edu.cn",
+      "profileUrl": "https://shi.buaa.edu.cn/renweiyan/zh_CN/index.htm"
     },
     "石波璟": {
       "title": "副研究员",
@@ -834,7 +1192,12 @@ export const supervisorDetails = {
       "tags": [
         "博士生导师"
       ],
-      "admissions": []
+      "admissions": [
+        {
+          "label": "2026博士招生资格名单线索",
+          "sourceUrl": "https://bme.buaa.edu.cn/newsInfo.aspx?catID=13&curID=14729&subcatID=1027"
+        }
+      ]
     },
     "史微": {
       "sourceUrl": "https://ygy.buaa.edu.cn/info/1156/2912.htm",
@@ -848,116 +1211,155 @@ export const supervisorDetails = {
       "researchSummary": "（1） 情绪记忆的神经环路基础，从分子，突触，环路水平，运用神经电生理和人工智能算法分析情绪记忆的神经编码机制。（2） 中间神经元的功能神经调控在癫痫等认知功能障碍类疾病的应用（3） 细胞外基质调控的功能神经环路对阿尔茨海默症引起神经凋亡的保护作用"
     },
     "孙旭阳": {
-      "sourceUrl": "https://ygy.buaa.edu.cn/info/1156/3049.htm",
+      "sourceUrl": "https://shi.buaa.edu.cn/sunxuyang/zh_CN/index.htm",
       "tags": [
         "博士生导师"
       ],
       "admissions": [],
       "title": "副教授、博士生导师",
       "email": "sunxuy@buaa.edu.cn",
-      "profileUrl": "https://shi.buaa.edu.cn/sunxuyang/zh_CN/index/180649/list/index.htm"
+      "profileUrl": "https://shi.buaa.edu.cn/sunxuyang/zh_CN/index.htm"
     },
     "唐振超": {
-      "sourceUrl": "https://ygy.buaa.edu.cn/info/1156/3429.htm",
+      "sourceUrl": "https://shi.buaa.edu.cn/tangzhenchao1/zh_CN/index.htm",
       "tags": [
         "博士生导师"
       ],
-      "admissions": [],
+      "admissions": [
+        {
+          "label": "2026博士招生资格名单线索",
+          "sourceUrl": "https://bme.buaa.edu.cn/newsInfo.aspx?catID=13&curID=14729&subcatID=1027"
+        }
+      ],
       "title": "副教授、博士生导师",
       "email": "tangzhenchao@buaa.edu.cn",
       "profileUrl": "https://shi.buaa.edu.cn/tangzhenchao1/zh_CN/index.htm"
     },
     "陶春静": {
-      "sourceUrl": "https://ygy.buaa.edu.cn/info/1156/3072.htm",
+      "sourceUrl": "https://shi.buaa.edu.cn/taochunjing/zh_CN/index.htm",
       "tags": [
         "博士生导师"
       ],
-      "admissions": [],
+      "admissions": [
+        {
+          "label": "2026博士招生资格名单线索",
+          "sourceUrl": "https://bme.buaa.edu.cn/newsInfo.aspx?catID=13&curID=14729&subcatID=1027"
+        }
+      ],
       "title": "教授",
       "email": "chunjingtao@buaa.edu.cn",
-      "profileUrl": "http://shi.buaa.edu.cn/taochunjing/zh_CN/index.htm"
+      "profileUrl": "https://shi.buaa.edu.cn/taochunjing/zh_CN/index.htm"
     },
     "田捷": {
-      "sourceUrl": "https://ygy.buaa.edu.cn/info/1087/4352.htm",
+      "sourceUrl": "https://shi.buaa.edu.cn/tianjie/zh_CN/index.htm",
       "tags": [],
-      "admissions": []
+      "admissions": [],
+      "profileUrl": "https://shi.buaa.edu.cn/tianjie/zh_CN/index.htm",
+      "title": "教授"
     },
     "王超": {
       "title": "副研究员",
       "email": "10896@buaa.edu.cn",
-      "sourceUrl": "https://ygy.buaa.edu.cn/info/1156/3039.htm",
+      "sourceUrl": "https://shi.buaa.edu.cn/wangchao1/zh_CN/index.htm",
       "tags": [
         "博士生导师"
       ],
-      "admissions": []
+      "admissions": [
+        {
+          "label": "2026博士招生资格名单线索",
+          "sourceUrl": "https://bme.buaa.edu.cn/newsInfo.aspx?catID=13&curID=14729&subcatID=1027"
+        }
+      ],
+      "profileUrl": "https://shi.buaa.edu.cn/wangchao1/zh_CN/index.htm"
     },
     "王迪": {
-      "sourceUrl": "https://ygy.buaa.edu.cn/info/1156/3075.htm",
+      "sourceUrl": "https://shi.buaa.edu.cn/wangdi/zh_CN/index.htm",
       "tags": [
         "硕士生导师"
       ],
       "admissions": [],
       "title": "助理教授",
-      "profileUrl": "https://shi.buaa.edu.cn/wangdi/zh_CN/index.htm欢迎生物医学工程（医",
+      "profileUrl": "https://shi.buaa.edu.cn/wangdi/zh_CN/index.htm",
       "researchSummary": "】脑电生理；癫痫；脑功能；认知神经科学；神经调控"
     },
     "王柯皓": {
-      "sourceUrl": "https://ygy.buaa.edu.cn/info/1156/3089.htm",
+      "sourceUrl": "https://shi.buaa.edu.cn/kehaowang/zh_CN/index.htm",
       "tags": [
         "博士生导师"
       ],
       "admissions": [],
       "title": "副教授",
       "email": "kehaowang@buaa.edu.cn",
-      "profileUrl": "http://shi.buaa.edu.cn/kehaowang/zh_CN/index.htm"
+      "profileUrl": "https://shi.buaa.edu.cn/kehaowang/zh_CN/index.htm"
     },
     "王硕": {
-      "sourceUrl": "https://ygy.buaa.edu.cn/info/1156/3232.htm",
+      "sourceUrl": "https://shi.buaa.edu.cn/wangshuoCAS/zh_CN/index.htm",
       "tags": [
         "博士生导师"
       ],
-      "admissions": [],
+      "admissions": [
+        {
+          "label": "2026博士招生资格名单线索",
+          "sourceUrl": "https://bme.buaa.edu.cn/newsInfo.aspx?catID=13&curID=14729&subcatID=1027"
+        }
+      ],
       "title": "教授、博士生导师",
-      "email": "shuo_wang@buaa.edu.cn"
+      "email": "shuo_wang@buaa.edu.cn",
+      "profileUrl": "https://shi.buaa.edu.cn/wangshuoCAS/zh_CN/index.htm"
     },
     "王晓飞": {
       "title": "教授",
       "email": "xiaofei.wang@buaa.edu.cn",
-      "profileUrl": "http://shi.buaa.edu.cn/wangxiaofei",
-      "sourceUrl": "https://ygy.buaa.edu.cn/info/1156/3099.htm",
-      "tags": [],
-      "admissions": []
+      "profileUrl": "https://shi.buaa.edu.cn/wangxiaofei/zh_CN/index.htm",
+      "sourceUrl": "https://shi.buaa.edu.cn/wangxiaofei/zh_CN/index.htm",
+      "tags": [
+        "博士生导师"
+      ],
+      "admissions": [
+        {
+          "label": "2026博士招生资格名单线索",
+          "sourceUrl": "https://bme.buaa.edu.cn/newsInfo.aspx?catID=13&curID=14729&subcatID=1027"
+        }
+      ]
     },
     "王雪林": {
-      "sourceUrl": "https://ygy.buaa.edu.cn/info/1156/3046.htm",
+      "sourceUrl": "https://shi.buaa.edu.cn/wangxuelin/zh_CN/index.htm",
       "tags": [
         "硕士生导师"
       ],
       "admissions": [],
       "title": "助理教授、硕士生导师",
       "email": "wangxuelin@buaa.edu.cn",
-      "researchSummary": "主要研究方向包括低熔点金属..."
+      "researchSummary": "主要研究方向包括低熔点金属...",
+      "profileUrl": "https://shi.buaa.edu.cn/wangxuelin/zh_CN/index.htm"
     },
     "王杨": {
-      "sourceUrl": "https://ygy.buaa.edu.cn/info/1156/4013.htm",
+      "sourceUrl": "https://shi.buaa.edu.cn/wangyang12/zh_CN/index.htm",
       "tags": [
         "博士生导师"
       ],
-      "admissions": [],
+      "admissions": [
+        {
+          "label": "2026博士招生资格名单线索",
+          "sourceUrl": "https://bme.buaa.edu.cn/newsInfo.aspx?catID=13&curID=14729&subcatID=1027"
+        }
+      ],
       "title": "副教授",
-      "email": "wangyang2022@buaa.edu.cn"
+      "email": "wangyang2022@buaa.edu.cn",
+      "profileUrl": "https://shi.buaa.edu.cn/wangyang12/zh_CN/index.htm"
     },
     "杨超娟": {
-      "sourceUrl": "https://ygy.buaa.edu.cn/info/1156/3454.htm",
+      "sourceUrl": "https://shi.buaa.edu.cn/yangchaojuan/zh_CN/index.htm",
       "tags": [
         "博士生导师"
       ],
       "admissions": [],
       "title": "副教授、博士生导师",
-      "email": "chaojuany@buaa.edu.cn"
+      "email": "chaojuany@buaa.edu.cn",
+      "profileUrl": "https://shi.buaa.edu.cn/yangchaojuan/zh_CN/index.htm"
     },
     "杨宏韬": {
-      "sourceUrl": "https://ygy.buaa.edu.cn/info/1156/3080.htm",
+      "sourceUrl": "https://shi.buaa.edu.cn/yanghongtao/zh_CN/index.htm",
       "tags": [
         "硕士生导师"
       ],
@@ -969,10 +1371,12 @@ export const supervisorDetails = {
     "杨昀": {
       "sourceUrl": "https://shi.buaa.edu.cn/yangyun731/zh_CN/index.htm",
       "tags": [],
-      "admissions": []
+      "admissions": [],
+      "profileUrl": "https://shi.buaa.edu.cn/yangyun731/zh_CN/index.htm",
+      "title": "副教授"
     },
     "姚艳": {
-      "sourceUrl": "https://ygy.buaa.edu.cn/info/1156/3425.htm",
+      "sourceUrl": "https://shi.buaa.edu.cn/yaoyan/zh_CN/index.htm",
       "tags": [
         "硕士生导师"
       ],
@@ -986,33 +1390,44 @@ export const supervisorDetails = {
       "tags": [
         "博士生导师"
       ],
-      "admissions": [],
+      "admissions": [
+        {
+          "label": "2026博士招生资格名单线索",
+          "sourceUrl": "https://bme.buaa.edu.cn/newsInfo.aspx?catID=13&curID=14729&subcatID=1027"
+        }
+      ],
       "title": "研究员、博士生导师",
       "email": "yesheng@buaa.edu.cn",
       "profileUrl": "https://shi.buaa.edu.cn/yesheng/zh_CN/index.htm",
       "researchSummary": "[1] 癌症等重大疾病的分子病理机制及相应的早期药物研发，尤其关注癌症转移的分子机制。[2] 病毒入侵宿主细胞的分子机制研究及相应的早期药物研发，尤其关注艾滋病毒、冠状病毒等具备融合核心的病毒。[3] 从头开始的蛋白质设计及人工蛋白质库的构建，尤其关注能够替代..."
     },
     "尹朋": {
-      "sourceUrl": "https://ygy.buaa.edu.cn/info/1156/3426.htm",
+      "sourceUrl": "https://shi.buaa.edu.cn/yinpeng/zh_CN/index.htm",
       "tags": [
         "博士生导师"
       ],
       "admissions": [],
       "title": "副教授",
       "email": "PengYin@buaa.edu.cn",
-      "profileUrl": "https://shi.buaa.edu.cn/yinpeng/zh_CN/index/194759/list/index.htm"
+      "profileUrl": "https://shi.buaa.edu.cn/yinpeng/zh_CN/index.htm"
     },
     "于健": {
       "sourceUrl": "https://ygy.buaa.edu.cn/info/1156/3096.htm",
       "tags": [
         "博士生导师"
       ],
-      "admissions": [],
+      "admissions": [
+        {
+          "label": "2026博士招生资格名单线索",
+          "sourceUrl": "https://bme.buaa.edu.cn/newsInfo.aspx?catID=13&curID=14729&subcatID=1027"
+        }
+      ],
       "title": "教授、博士生导师",
-      "profileUrl": "https://shi.buaa.edu.cn/bhyj66/zh_CN/index.htm"
+      "profileUrl": "https://shi.buaa.edu.cn/bhyj66/zh_CN/index.htm",
+      "email": "yulab@buaa.edu.cn"
     },
     "余春红": {
-      "sourceUrl": "https://ygy.buaa.edu.cn/info/1156/3050.htm",
+      "sourceUrl": "https://shi.buaa.edu.cn/ych3433/zh_CN/index.htm",
       "tags": [
         "硕士生导师",
         "博士生导师"
@@ -1023,7 +1438,7 @@ export const supervisorDetails = {
       "profileUrl": "https://shi.buaa.edu.cn/ych3433/zh_CN/index.htm"
     },
     "张大可": {
-      "sourceUrl": "https://ygy.buaa.edu.cn/info/1156/3038.htm",
+      "sourceUrl": "https://shi.buaa.edu.cn/dakezhang/zh_CN/index.htm",
       "tags": [
         "博士生导师"
       ],
@@ -1033,28 +1448,38 @@ export const supervisorDetails = {
       "profileUrl": "https://shi.buaa.edu.cn/dakezhang/zh_CN/index.htm"
     },
     "张慧": {
-      "sourceUrl": "https://ygy.buaa.edu.cn/info/1156/3033.htm",
+      "sourceUrl": "https://shi.buaa.edu.cn/zhanghui2/zh_CN/index.htm",
       "tags": [
         "硕士生导师",
         "博士生导师"
       ],
-      "admissions": [],
+      "admissions": [
+        {
+          "label": "2026博士招生资格名单线索",
+          "sourceUrl": "https://bme.buaa.edu.cn/newsInfo.aspx?catID=13&curID=14729&subcatID=1027"
+        }
+      ],
       "title": "副教授",
       "email": "hui.zhang@buaa.edu.cn",
       "profileUrl": "https://shi.buaa.edu.cn/zhanghui2/zh_CN/index.htm"
     },
     "张靖": {
-      "sourceUrl": "https://ygy.buaa.edu.cn/info/1156/3101.htm",
+      "sourceUrl": "https://shi.buaa.edu.cn/jz2716/zh_CN/index.htm",
       "tags": [
         "博士生导师"
       ],
-      "admissions": [],
+      "admissions": [
+        {
+          "label": "2026博士招生资格名单线索",
+          "sourceUrl": "https://bme.buaa.edu.cn/newsInfo.aspx?catID=13&curID=14729&subcatID=1027"
+        }
+      ],
       "title": "教授、博士生导师",
       "email": "jz2716@buaa.edu.cn",
       "profileUrl": "https://shi.buaa.edu.cn/jz2716/zh_CN/index.htm"
     },
     "张永彪": {
-      "sourceUrl": "https://ygy.buaa.edu.cn/info/1156/3053.htm",
+      "sourceUrl": "https://shi.buaa.edu.cn/zhangyb/zh_CN/index.htm",
       "tags": [
         "博士生导师"
       ],
@@ -1064,18 +1489,23 @@ export const supervisorDetails = {
       "profileUrl": "https://shi.buaa.edu.cn/zhangyb/zh_CN/index.htm"
     },
     "张泽宇": {
-      "sourceUrl": "https://ygy.buaa.edu.cn/info/1156/4442.htm",
+      "sourceUrl": "https://shi.buaa.edu.cn/zhangzeyubme/zh_CN/index.htm",
       "tags": [
         "硕士生导师",
         "博士生导师"
       ],
-      "admissions": [],
+      "admissions": [
+        {
+          "label": "2026博士招生资格名单线索",
+          "sourceUrl": "https://bme.buaa.edu.cn/newsInfo.aspx?catID=13&curID=14729&subcatID=1027"
+        }
+      ],
       "title": "副教授、硕士生导师、博士生导师",
       "email": "zhang_zeyu@buaa.edu.cn",
-      "profileUrl": "https://shi.buaa.edu.cn/zhangzeyubme/zh_CN/index/203169/list/index.htm"
+      "profileUrl": "https://shi.buaa.edu.cn/zhangzeyubme/zh_CN/index.htm"
     },
     "赵心彬": {
-      "sourceUrl": "https://ygy.buaa.edu.cn/info/1156/3428.htm",
+      "sourceUrl": "https://shi.buaa.edu.cn/zhaoxinbin/zh_CN/index.htm",
       "tags": [
         "博士生导师"
       ],
@@ -1085,30 +1515,40 @@ export const supervisorDetails = {
       "profileUrl": "https://shi.buaa.edu.cn/zhaoxinbin/zh_CN/index.htm"
     },
     "赵雁雨": {
-      "sourceUrl": "https://ygy.buaa.edu.cn/info/1156/3405.htm",
+      "sourceUrl": "https://shi.buaa.edu.cn/yanyuz/zh_CN/index.htm",
       "tags": [
         "博士生导师"
       ],
-      "admissions": [],
+      "admissions": [
+        {
+          "label": "2026博士招生资格名单线索",
+          "sourceUrl": "https://bme.buaa.edu.cn/newsInfo.aspx?catID=13&curID=14729&subcatID=1027"
+        }
+      ],
       "title": "副教授",
       "email": "yanyuzhao@buaa.edu.cn",
       "profileUrl": "https://shi.buaa.edu.cn/yanyuz/zh_CN/index.htm"
     },
     "郑钰山": {
-      "sourceUrl": "https://ygy.buaa.edu.cn/info/1156/3413.htm",
+      "sourceUrl": "https://shi.buaa.edu.cn/zhengyushan/zh_CN/index.htm",
       "tags": [
         "博士生导师"
       ],
-      "admissions": [],
+      "admissions": [
+        {
+          "label": "2026博士招生资格名单线索",
+          "sourceUrl": "https://bme.buaa.edu.cn/newsInfo.aspx?catID=13&curID=14729&subcatID=1027"
+        }
+      ],
       "title": "副教授、博士生导师",
       "email": "yszheng@buaa.edu.cn",
-      "profileUrl": "https://shi.buaa.edu.cn/zhengyushan"
+      "profileUrl": "https://shi.buaa.edu.cn/zhengyushan/zh_CN/index.htm"
     },
     "钟江宏": {
       "title": "副教授、博士生导师",
       "email": "jzhong@buaa.edu.cn",
-      "profileUrl": "http://shi.buaa.edu.cn/jzhong/zh_CN/index.htm",
-      "sourceUrl": "https://ygy.buaa.edu.cn/info/1156/3034.htm",
+      "profileUrl": "https://shi.buaa.edu.cn/jzhong/zh_CN/index.htm",
+      "sourceUrl": "https://shi.buaa.edu.cn/jzhong/zh_CN/index.htm",
       "tags": [
         "博士生导师"
       ],
@@ -1119,7 +1559,12 @@ export const supervisorDetails = {
       "tags": [
         "博士生导师"
       ],
-      "admissions": [],
+      "admissions": [
+        {
+          "label": "2026博士招生资格名单线索",
+          "sourceUrl": "https://bme.buaa.edu.cn/newsInfo.aspx?catID=13&curID=14729&subcatID=1027"
+        }
+      ],
       "title": "副教授、博士生导师",
       "email": "bingzh@buaa.edu.cn",
       "profileUrl": "https://shi.buaa.edu.cn/zhoubing/zh_CN/index.htm",
@@ -1850,10 +2295,13 @@ export const supervisorDetails = {
   },
   "sources": {
     "bmeTeachers": "https://bme.buaa.edu.cn/teachers.aspx?catID=7",
+    "bmeShiTeachers": "https://shi.buaa.edu.cn/xyjslb.jsp?id=1144&lang=zh_CN&st=0&urltype=tsites.CollegeTeacherList&wbtreeid=1001",
     "bmeMasterDirections": "https://bme.buaa.edu.cn/zhaopinHr.aspx?catID=9&curID=713&subcatID=40",
     "bmePhd2026": "https://bme.buaa.edu.cn/newsInfo.aspx?catID=13&curID=14729&subcatID=1027",
     "msePeople": "https://ygy.buaa.edu.cn/info/1022/3032.htm",
     "mseDetail": "https://ygy.buaa.edu.cn/szdw1/szryxx.htm",
-    "msePhd2026": "https://ygy.buaa.edu.cn/info/1004/4492.htm"
+    "mseShiTeachers": "https://shi.buaa.edu.cn/xyjslb.jsp?id=1189&lang=zh_CN&st=0&urltype=tsites.CollegeTeacherList&wbtreeid=1001",
+    "msePhd2026": "https://ygy.buaa.edu.cn/info/1004/4492.htm",
+    "shiTeacherSearch": "https://shi.buaa.edu.cn/system/resource/tsites/advancesearch.jsp"
   }
 };
