@@ -179,7 +179,7 @@ svg {
 
 .stat-grid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 12px;
   margin: 16px 0;
 }
@@ -524,7 +524,7 @@ svg {
 
 .supervisor-card__metrics {
   display: grid;
-  grid-template-columns: repeat(2, 68px) 28px;
+  grid-template-columns: repeat(3, 68px) 28px;
   gap: 8px;
   align-items: center;
 }
@@ -628,6 +628,48 @@ svg {
   border-radius: 50%;
   background: var(--green);
   transform: translateY(-2px);
+}
+
+.detail-copy,
+.detail-note {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+.detail-note {
+  margin-top: 10px;
+  color: var(--text-soft);
+}
+
+.link-list {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.link-list a {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--blue);
+  font-size: 13px;
+  font-weight: 750;
+  line-height: 1.5;
+  text-decoration: none;
+}
+
+.link-list a:hover {
+  text-decoration: underline;
+}
+
+.link-list svg {
+  width: 15px;
+  height: 15px;
+  flex: 0 0 auto;
 }
 
 .evidence-meter {
@@ -837,7 +879,7 @@ svg {
 
 .source-grid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 12px;
 }
 
@@ -1060,7 +1102,7 @@ svg {
   }
 
   .supervisor-card__metrics {
-    grid-template-columns: repeat(2, minmax(0, 1fr)) 32px;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) 32px;
   }
 
   .direction-strip {

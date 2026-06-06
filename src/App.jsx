@@ -18,11 +18,14 @@ import {
   UserRound,
   Users,
 } from "lucide-react";
+import { supervisorDetails } from "./supervisorDetails";
 
 const BME_SOURCE_URL = "https://bme.buaa.edu.cn/zhaopinHr.aspx?catID=9&curID=713&subcatID=40";
 const BME_TEACHERS_URL = "https://bme.buaa.edu.cn/teachers.aspx?catID=7";
+const BME_PHD_2026_URL = "https://bme.buaa.edu.cn/newsInfo.aspx?catID=13&curID=14729&subcatID=1027";
 const MSE_PEOPLE_URL = "https://ygy.buaa.edu.cn/info/1022/3032.htm";
 const MSE_DETAIL_URL = "https://ygy.buaa.edu.cn/szdw1/szryxx.htm";
+const MSE_PHD_2026_URL = "https://ygy.buaa.edu.cn/info/1004/4492.htm";
 
 const bmeDirections = [
   {
@@ -220,25 +223,53 @@ function parseMentor(rawName) {
   };
 }
 
+function uniqueItems(items) {
+  return Array.from(new Set(items.filter(Boolean)));
+}
+
+function getTagTone(tag) {
+  if (tag.includes("博士生导师")) return "blue";
+  if (tag.includes("硕士生导师")) return "green";
+  if (tag.includes("兼职导师")) return "amber";
+  if (tag.includes("国家级")) return "amber";
+  return "neutral";
+}
+
+function getSupplementalDetail(schoolKey, name) {
+  const detail = supervisorDetails[schoolKey]?.[name] ?? {};
+  const admission = supervisorDetails.admissions?.[name] ?? {};
+  return {
+    ...detail,
+    email: detail.email ?? admission.email,
+    tags: uniqueItems([...(detail.tags ?? []), ...(admission.tags ?? [])]),
+    admissions: [...(detail.admissions ?? []), ...(admission.admissions ?? [])],
+  };
+}
+
 function buildBmeSupervisors() {
   const byName = new Map();
 
   bmeDirections.forEach((area) => {
     area.mentors.forEach((rawName) => {
       const { name, partTime } = parseMentor(rawName);
+      const detail = getSupplementalDetail("bme", name);
       if (!byName.has(name)) {
         byName.set(name, {
           id: `bme-${name}`,
           school: "生物与医学工程学院",
           name,
-          title: "指导教师",
+          title: detail.title ?? "指导教师",
           directions: [],
           groups: new Set(),
           categories: new Set(),
-          tags: new Set(),
+          tags: new Set(["硕士生导师", ...(detail.tags ?? [])]),
+          email: detail.email,
+          researchSummary: detail.researchSummary,
+          admissions: detail.admissions ?? [],
           source: "生物与医学工程学院硕士研究生培养方向设置及指导教师对照表",
           sourceUrl: BME_SOURCE_URL,
-          profileUrl: BME_TEACHERS_URL,
+          profileUrl: detail.profileUrl,
+          profileSourceUrl: detail.sourceUrl,
         });
       }
 
@@ -247,6 +278,7 @@ function buildBmeSupervisors() {
       teacher.groups.add(area.group);
       teacher.categories.add(area.name);
       if (partTime) teacher.tags.add("兼职导师");
+      (detail.tags ?? []).forEach((tag) => teacher.tags.add(tag));
     });
   });
 
@@ -255,26 +287,31 @@ function buildBmeSupervisors() {
     groups: Array.from(teacher.groups),
     categories: Array.from(teacher.categories),
     tags: Array.from(teacher.tags),
+    admissions: teacher.admissions ?? [],
   }));
 }
 
 function buildMseSupervisors() {
   return msePeople.map(([name, profileUrl]) => {
     const detail = mseKnownDetails[name] ?? {};
+    const supplemental = getSupplementalDetail("mse", name);
     const directions = detail.directions ?? [];
     return {
       id: `mse-${name}`,
       school: "医学科学与工程学院",
       name,
-      title: detail.title ?? "师资人员",
+      title: supplemental.title ?? detail.title ?? "师资人员",
       directions,
       groups: ["医学科学与工程学院师资"],
       categories: directions.length ? directions : ["医工学院师资索引"],
-      tags: detail.tags ?? [],
-      email: detail.email,
+      tags: uniqueItems([...(detail.tags ?? []), ...(supplemental.tags ?? [])]),
+      email: supplemental.email ?? detail.email,
+      researchSummary: supplemental.researchSummary,
+      admissions: supplemental.admissions ?? [],
       source: "医学科学与工程学院人员列表及师资人员详细索引",
-      sourceUrl: detail.sourceUrl ?? profileUrl,
-      profileUrl,
+      sourceUrl: supplemental.sourceUrl ?? detail.sourceUrl ?? profileUrl,
+      profileUrl: supplemental.profileUrl ?? profileUrl,
+      profileSourceUrl: supplemental.sourceUrl ?? profileUrl,
     };
   });
 }
@@ -298,6 +335,11 @@ const sourceCards = [
     url: BME_TEACHERS_URL,
   },
   {
+    title: "2026博士资格名单",
+    desc: "医工交叉学科群 2026 年第一批具有博士生招生资格的导师名单。",
+    url: BME_PHD_2026_URL,
+  },
+  {
     title: "医工学院人员列表",
     desc: "医学科学与工程学院官网发布的按姓氏排列人员列表。",
     url: MSE_PEOPLE_URL,
@@ -306,6 +348,11 @@ const sourceCards = [
     title: "医工学院师资详情索引",
     desc: "医学科学与工程学院师资人员详细分页索引。",
     url: MSE_DETAIL_URL,
+  },
+  {
+    title: "2026博士招生方案",
+    desc: "医学科学与工程学院发布的医工交叉学科群 2026 年博士研究生招生工作方案。",
+    url: MSE_PHD_2026_URL,
   },
 ];
 
@@ -318,19 +365,39 @@ function getPrimaryDirection(item) {
   return first?.replace(/^\S+\s+/, "") ?? "待从官网进一步核验";
 }
 
+function getAdvisorStatus(item) {
+  if (item.tags.includes("博士生导师")) return "博导";
+  if (item.tags.includes("硕士生导师")) return "硕导";
+  return "待查";
+}
+
+function hasAdvisorTag(item) {
+  return item.tags.some((tag) => tag === "硕士生导师" || tag === "博士生导师");
+}
+
+function getProfileLinkLabel(url) {
+  if (!url) return "教师主页";
+  if (url.includes("shi.buaa.edu.cn")) return "北航教师主页";
+  if (url.includes("bme.buaa.edu.cn") || url.includes("ygy.buaa.edu.cn")) return "学院教师详情页";
+  return "教师主页";
+}
+
 function getEvidenceItems(item) {
   return [
     { label: "学院官网来源", active: Boolean(item.sourceUrl) },
-    { label: "个人/官网入口", active: Boolean(item.profileUrl) },
+    { label: "精确主页入口", active: Boolean(item.profileUrl) },
     { label: "公开方向索引", active: getDirectionItems(item).length > 0 && !getDirectionItems(item).includes("医工学院师资索引") },
     { label: "公开邮箱", active: Boolean(item.email) },
+    { label: "导师资格标签", active: hasAdvisorTag(item) },
+    { label: "科研/基金摘要", active: Boolean(item.researchSummary) },
+    { label: "2026招生线索", active: Boolean(item.admissions?.length) },
   ];
 }
 
 function getEvidenceSummary(item) {
   const evidence = getEvidenceItems(item);
   const count = evidence.filter((entry) => entry.active).length;
-  const label = count >= 4 ? "线索完整" : count >= 3 ? "可先联系" : "需补充核验";
+  const label = count >= 6 ? "信息较完整" : count >= 4 ? "可重点核验" : "需补充核验";
   return { count, total: evidence.length, label, evidence };
 }
 
@@ -342,6 +409,12 @@ function getStudentClues(item) {
     clues.push("适合先按官方培养方向筛选，再逐一核对导师主页和当年招生目录。");
   } else {
     clues.push("适合从医工学院师资索引进入个人页，重点核对具体课题组方向。");
+  }
+
+  if (item.profileUrl) {
+    clues.push(`已整理到${getProfileLinkLabel(item.profileUrl)}，建议优先从主页核对职称、邮箱、课题组和论文项目。`);
+  } else {
+    clues.push("暂未整理到精确个人主页，联系前建议从学院师资页或北航教师主页检索复核。");
   }
 
   if (directions.length >= 4) {
@@ -356,6 +429,20 @@ function getStudentClues(item) {
     clues.push("已整理公开邮箱，可作为初次礼貌联系入口。");
   } else {
     clues.push("未整理到公开邮箱，建议先通过官网个人页或学院页面核验联系方式。");
+  }
+
+  if (hasAdvisorTag(item)) {
+    clues.push(`导师资格标签：${item.tags.filter((tag) => tag === "硕士生导师" || tag === "博士生导师").join("、")}。`);
+  } else {
+    clues.push("暂未整理到硕导/博导公开标签，报考前需以当年招生目录和导师确认结果为准。");
+  }
+
+  if (item.researchSummary) {
+    clues.push("主页中有科研方向、论文或基金项目线索，可据此继续检索近两三年论文和课题组新闻。");
+  }
+
+  if (item.admissions?.length) {
+    clues.push("匹配到 2026 博士招生资格名单线索；招生名额和专业方向仍需以学院后续通知与导师确认为准。");
   }
 
   if (item.tags.includes("兼职导师")) {
@@ -432,6 +519,8 @@ function SupervisorCard({ item, expanded, onToggle }) {
   const directions = getDirectionItems(item);
   const evidence = getEvidenceSummary(item);
   const progress = `${(evidence.count / evidence.total) * 100}%`;
+  const advisorStatus = getAdvisorStatus(item);
+  const advisorTags = item.tags.filter((tag) => tag === "硕士生导师" || tag === "博士生导师");
 
   return (
     <article className="supervisor-card">
@@ -445,7 +534,7 @@ function SupervisorCard({ item, expanded, onToggle }) {
             </div>
             <div className="supervisor-card__chips">
               <Chip tone={item.school === "医学科学与工程学院" ? "blue" : "green"}>{item.school}</Chip>
-              {item.tags.map((tag) => <Chip key={tag} tone={tag === "兼职导师" ? "amber" : "neutral"}>{tag}</Chip>)}
+              {item.tags.map((tag) => <Chip key={tag} tone={getTagTone(tag)}>{tag}</Chip>)}
               <Chip tone="slate">{evidence.label}</Chip>
             </div>
           </div>
@@ -459,6 +548,10 @@ function SupervisorCard({ item, expanded, onToggle }) {
           <div>
             <strong>{item.email ? "有" : "待查"}</strong>
             <span>邮箱</span>
+          </div>
+          <div>
+            <strong>{advisorStatus}</strong>
+            <span>资格</span>
           </div>
           <ChevronDown className={expanded ? "chevron chevron--open" : "chevron"} aria-hidden="true" />
         </div>
@@ -501,6 +594,41 @@ function SupervisorCard({ item, expanded, onToggle }) {
             </div>
           </div>
 
+          {(advisorTags.length > 0 || item.researchSummary || item.admissions?.length) && (
+            <div className="detail-grid">
+              {advisorTags.length > 0 && (
+                <div className="detail-panel">
+                  <span className="detail-label">导师资格标签</span>
+                  <div className="chip-row">
+                    {advisorTags.map((tag) => <Chip key={tag} tone={getTagTone(tag)}>{tag}</Chip>)}
+                  </div>
+                  <p className="detail-note">标签来自教师主页、学院师资页或 2026 博士招生资格名单；报名前仍需按当年目录复核。</p>
+                </div>
+              )}
+              {item.researchSummary && (
+                <div className="detail-panel">
+                  <span className="detail-label">主页科研/基金线索</span>
+                  <p className="detail-copy">{item.researchSummary}</p>
+                </div>
+              )}
+              {item.admissions?.length > 0 && (
+                <div className="detail-panel">
+                  <span className="detail-label">招生线索</span>
+                  <ul className="link-list">
+                    {item.admissions.map((entry, index) => (
+                      <li key={`${entry.label}-${index}`}>
+                        <a href={entry.sourceUrl} target="_blank" rel="noreferrer">
+                          {entry.label}
+                          <ArrowUpRight aria-hidden="true" />
+                        </a>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+          )}
+
           <div className="detail-grid detail-grid--compact">
             <div className="fact-row">
               <Layers aria-hidden="true" />
@@ -525,10 +653,18 @@ function SupervisorCard({ item, expanded, onToggle }) {
                 {item.email}
               </a>
             )}
-            <a className="link-button" href={item.profileUrl} target="_blank" rel="noreferrer">
-              <UserRound aria-hidden="true" />
-              官网/个人页
-            </a>
+            {item.profileUrl && (
+              <a className="link-button" href={item.profileUrl} target="_blank" rel="noreferrer">
+                <UserRound aria-hidden="true" />
+                {getProfileLinkLabel(item.profileUrl)}
+              </a>
+            )}
+            {!item.profileUrl && item.profileSourceUrl && (
+              <a className="link-button" href={item.profileSourceUrl} target="_blank" rel="noreferrer">
+                <UserRound aria-hidden="true" />
+                师资详情页
+              </a>
+            )}
             <a className="link-button" href={item.sourceUrl} target="_blank" rel="noreferrer">
               <ExternalLink aria-hidden="true" />
               数据来源
@@ -579,13 +715,15 @@ export default function App() {
   const [activeTab, setActiveTab] = useState("database");
 
   const stats = useMemo(() => {
-    const partTimeCount = supervisors.filter((item) => item.tags.includes("兼职导师")).length;
     const emailCount = supervisors.filter((item) => item.email).length;
+    const advisorTagCount = supervisors.filter((item) => hasAdvisorTag(item)).length;
+    const admissionCount = supervisors.filter((item) => item.admissions?.length).length;
     return [
       { label: "导师/师资记录", value: supervisors.length, icon: Users },
       { label: "培养方向与索引", value: categories.length - 1, icon: Layers },
       { label: "公开邮箱记录", value: emailCount, icon: Mail },
-      { label: "兼职导师标注", value: partTimeCount, icon: ClipboardCheck },
+      { label: "硕/博导标签", value: advisorTagCount, icon: ClipboardCheck },
+      { label: "2026招生线索", value: admissionCount, icon: GraduationCap },
     ];
   }, []);
 
@@ -604,7 +742,10 @@ export default function App() {
           ...item.groups,
           ...item.categories,
           ...item.tags,
+          item.researchSummary ?? "",
+          item.profileUrl ?? "",
           item.email ?? "",
+          ...(item.admissions ?? []).map((entry) => entry.label),
         ].join(" ").toLowerCase();
         return haystack.includes(query);
       })
