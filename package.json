@@ -7,6 +7,7 @@
     "dev": "vite",
     "build": "vite build",
     "generate:details": "node scripts/generate-supervisor-details.mjs",
+    "audit:directions": "node scripts/audit-supervisor-directions.mjs",
     "lint": "eslint .",
     "preview": "vite preview",
     "predeploy": "npm run build",

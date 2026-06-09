@@ -49,12 +49,18 @@ body {
 
 button,
 input,
-select {
+select,
+textarea {
   font: inherit;
 }
 
 button {
   color: inherit;
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.58;
 }
 
 a {
@@ -641,6 +647,157 @@ svg {
 .detail-note {
   margin-top: 10px;
   color: var(--text-soft);
+}
+
+.community-panel {
+  display: grid;
+  gap: 12px;
+}
+
+.community-panel__header,
+.review-panel__header,
+.review-panel__actions,
+.community-form__actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.community-panel__header .detail-note {
+  margin-top: 0;
+}
+
+.community-note-list {
+  display: grid;
+  gap: 9px;
+}
+
+.community-note {
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--bg-soft);
+}
+
+.community-note > div {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.community-note > div span:last-child {
+  color: var(--text-soft);
+  font-size: 12px;
+}
+
+.community-note p {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 13px;
+  line-height: 1.65;
+}
+
+.community-note a {
+  display: inline-flex;
+  width: fit-content;
+  align-items: center;
+  gap: 4px;
+  color: var(--blue);
+  font-size: 13px;
+  font-weight: 750;
+  text-decoration: none;
+}
+
+.community-note a:hover {
+  text-decoration: underline;
+}
+
+.community-note svg {
+  width: 15px;
+  height: 15px;
+}
+
+.community-form {
+  display: grid;
+  gap: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+}
+
+.community-form__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.field textarea {
+  min-height: 112px;
+  resize: vertical;
+}
+
+.community-form__actions p,
+.review-panel__actions span {
+  margin: 0;
+  color: var(--text-soft);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.review-panel {
+  display: grid;
+  gap: 12px;
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: 0 6px 24px rgba(34, 55, 72, 0.06);
+}
+
+.review-panel__header > div {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.review-panel__header svg {
+  color: var(--blue);
+}
+
+.review-panel h3 {
+  margin: 0;
+  font-size: 16px;
+}
+
+.review-panel p {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+.review-panel code {
+  padding: 2px 5px;
+  border-radius: 4px;
+  background: var(--bg-soft);
+  color: var(--text);
+}
+
+.review-export {
+  width: 100%;
+  min-height: 112px;
+  padding: 11px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--bg-soft);
+  color: var(--text-muted);
+  font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace;
+  font-size: 12px;
+  line-height: 1.55;
+  resize: vertical;
 }
 
 .link-list {

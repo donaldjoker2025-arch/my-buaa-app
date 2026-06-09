@@ -7,18 +7,22 @@ import {
   CheckCircle2,
   ChevronDown,
   ClipboardCheck,
+  Copy,
   ExternalLink,
   Filter,
   GraduationCap,
   Layers,
   Link as LinkIcon,
   Mail,
+  MessageSquare,
   Search,
+  Send,
   SlidersHorizontal,
   UserRound,
   Users,
 } from "lucide-react";
 import { supervisorDetails } from "./supervisorDetails";
+import { communityNotes } from "./communityNotes";
 
 const BME_SOURCE_URL = "https://bme.buaa.edu.cn/zhaopinHr.aspx?catID=9&curID=713&subcatID=40";
 const BME_TEACHERS_URL = "https://bme.buaa.edu.cn/teachers.aspx?catID=7";
@@ -29,6 +33,17 @@ const MSE_DETAIL_URL = "https://ygy.buaa.edu.cn/szdw1/szryxx.htm";
 const MSE_SHI_TEACHERS_URL = "https://shi.buaa.edu.cn/xyjslb.jsp?id=1189&lang=zh_CN&st=0&urltype=tsites.CollegeTeacherList&wbtreeid=1001";
 const MSE_PHD_2026_URL = "https://ygy.buaa.edu.cn/info/1004/4492.htm";
 const SHI_TEACHER_SEARCH_URL = "https://shi.buaa.edu.cn/jssy.jsp?urltype=tree.TreeTempUrl&wbtreeid=1004";
+const noteTypeOptions = [
+  "招生名额",
+  "研究方向",
+  "联系方式",
+  "课题组安排",
+  "培养方式",
+  "论文/项目",
+  "就业/实习",
+  "其他线索",
+];
+const relationOptions = ["在读/已毕业学生", "同组或同院同学", "公开信息整理", "其他知情来源"];
 
 const bmeDirections = [
   {
@@ -199,21 +214,18 @@ const mseKnownDetails = {
     title: "教授",
     email: "lingqianchang@buaa.edu.cn",
     directions: ["纳米电穿孔", "细胞生物芯片", "生物传感器", "药物递送技术"],
-    tags: ["国家级人才"],
     sourceUrl: "https://ygy.buaa.edu.cn/info/1087/4350.htm",
   },
   唐振超: {
     title: "副教授、博士生导师",
     email: "tangzhenchao@buaa.edu.cn",
     directions: ["新一代医学成像设备研制", "医学影像大模型", "医学人工智能", "医学影像大数据挖掘"],
-    tags: ["医学影像AI"],
     sourceUrl: "https://ygy.buaa.edu.cn/info/1156/3429.htm",
   },
   高明: {
     title: "讲师、医师、硕士生导师、博士生导师",
     email: "gming@buaa.edu.cn",
     directions: ["人体体液蛋白标志物超灵敏检测系统构建", "体外诊断检验试剂研发"],
-    tags: ["体外诊断"],
     sourceUrl: "https://ygy.buaa.edu.cn/info/1156/3043.htm",
   },
 };
@@ -244,7 +256,6 @@ function getTagTone(tag) {
   if (tag.includes("博士生导师")) return "blue";
   if (tag.includes("硕士生导师")) return "green";
   if (tag.includes("兼职导师")) return "amber";
-  if (tag.includes("国家级")) return "amber";
   return "neutral";
 }
 
@@ -254,6 +265,7 @@ function getSupplementalDetail(schoolKey, name) {
   return {
     ...detail,
     email: detail.email ?? admission.email,
+    directions: uniqueItems(detail.directions ?? []),
     tags: uniqueItems([...(detail.tags ?? []), ...(admission.tags ?? [])]),
     admissions: uniqueAdmissions([...(detail.admissions ?? []), ...(admission.admissions ?? [])]),
   };
@@ -269,6 +281,7 @@ function buildBmeSupervisors() {
       if (!byName.has(name)) {
         byName.set(name, {
           id: `bme-${name}`,
+          schoolKey: "bme",
           school: "生物与医学工程学院",
           name,
           title: detail.title ?? "指导教师",
@@ -308,16 +321,20 @@ function buildMseSupervisors() {
   return msePeople.map(([name, profileUrl]) => {
     const detail = mseKnownDetails[name] ?? {};
     const supplemental = getSupplementalDetail("mse", name);
-    const directions = detail.directions ?? [];
+    const directions = uniqueItems([
+      ...(detail.directions ?? []),
+      ...(supplemental.directions ?? []),
+    ]);
     return {
       id: `mse-${name}`,
+      schoolKey: "mse",
       school: "医学科学与工程学院",
       name,
       title: supplemental.title ?? detail.title ?? "师资人员",
       directions,
       groups: ["医学科学与工程学院师资"],
-      categories: directions.length ? directions : ["医工学院师资索引"],
-      tags: uniqueItems([...(detail.tags ?? []), ...(supplemental.tags ?? [])]),
+      categories: directions,
+      tags: uniqueItems([...(detail.tags ?? []), ...(supplemental.tags ?? []), ...directions]),
       email: supplemental.email ?? detail.email,
       researchSummary: supplemental.researchSummary,
       admissions: supplemental.admissions ?? [],
@@ -388,6 +405,37 @@ function getDirectionItems(item) {
   return item.directions.length ? item.directions : item.categories;
 }
 
+function getApprovedNotes(item) {
+  return communityNotes[item.schoolKey]?.[item.name] ?? [];
+}
+
+function getPendingKey(item) {
+  return `${item.schoolKey}:${item.name}`;
+}
+
+function safeReadPendingSubmissions() {
+  if (typeof window === "undefined") return [];
+  try {
+    const parsed = JSON.parse(window.localStorage.getItem("buaa-pending-community-notes") ?? "[]");
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+function writePendingSubmissions(items) {
+  if (typeof window === "undefined") return;
+  window.localStorage.setItem("buaa-pending-community-notes", JSON.stringify(items));
+}
+
+async function copyText(value) {
+  if (typeof navigator !== "undefined" && navigator.clipboard?.writeText) {
+    await navigator.clipboard.writeText(value);
+    return true;
+  }
+  return false;
+}
+
 function getPrimaryDirection(item) {
   const [first] = getDirectionItems(item);
   return first?.replace(/^\S+\s+/, "") ?? "待从官网进一步核验";
@@ -403,9 +451,13 @@ function hasAdvisorTag(item) {
   return item.tags.some((tag) => tag === "硕士生导师" || tag === "博士生导师");
 }
 
+function isBuaaTeacherHome(url) {
+  return Boolean(url?.includes("shi.buaa.edu.cn"));
+}
+
 function getProfileLinkLabel(url) {
   if (!url) return "教师主页";
-  if (url.includes("shi.buaa.edu.cn")) return "北航教师主页";
+  if (isBuaaTeacherHome(url)) return "北航教师主页";
   if (url.includes("bme.buaa.edu.cn") || url.includes("ygy.buaa.edu.cn")) return "学院教师详情页";
   return "教师主页";
 }
@@ -413,8 +465,8 @@ function getProfileLinkLabel(url) {
 function getEvidenceItems(item) {
   return [
     { label: "学院官网来源", active: Boolean(item.sourceUrl) },
-    { label: "精确主页入口", active: Boolean(item.profileUrl) },
-    { label: "公开方向索引", active: getDirectionItems(item).length > 0 && !getDirectionItems(item).includes("医工学院师资索引") },
+    { label: "北航教师主页", active: isBuaaTeacherHome(item.profileUrl) },
+    { label: "公开方向索引", active: getDirectionItems(item).length > 0 },
     { label: "公开邮箱", active: Boolean(item.email) },
     { label: "导师资格标签", active: hasAdvisorTag(item) },
     { label: "科研/基金摘要", active: Boolean(item.researchSummary) },
@@ -436,7 +488,7 @@ function getStudentClues(item) {
   if (item.school === "生物与医学工程学院") {
     clues.push("适合先按官方培养方向筛选，再逐一核对导师主页和当年招生目录。");
   } else {
-    clues.push("适合从医工学院师资索引进入个人页，重点核对具体课题组方向。");
+    clues.push("适合从医工学院官网个人页进入，重点核对具体课题组方向。");
   }
 
   if (item.profileUrl) {
@@ -450,7 +502,7 @@ function getStudentClues(item) {
   } else if (directions.length > 1) {
     clues.push("公开方向较集中，可结合论文和课题组网页判断匹配度。");
   } else {
-    clues.push("页面仅有基础师资索引，联系前建议补充检索个人主页、论文和课题组新闻。");
+    clues.push("公开方向仍偏少，联系前建议补充检索个人主页、论文和课题组新闻。");
   }
 
   if (item.email) {
@@ -543,7 +595,171 @@ function SourceNotice() {
   );
 }
 
-function SupervisorCard({ item, expanded, onToggle }) {
+function CommunityNotesPanel({ item, pendingCount, onSubmitNote }) {
+  const approvedNotes = getApprovedNotes(item);
+  const [showForm, setShowForm] = useState(false);
+  const [form, setForm] = useState({
+    type: noteTypeOptions[0],
+    relation: relationOptions[0],
+    content: "",
+    sourceUrl: "",
+    contact: "",
+  });
+  const [submitted, setSubmitted] = useState(false);
+  const canSubmit = form.content.trim().length >= 12;
+
+  function updateField(field, value) {
+    setSubmitted(false);
+    setForm((current) => ({ ...current, [field]: value }));
+  }
+
+  function handleSubmit(event) {
+    event.preventDefault();
+    if (!canSubmit) return;
+    onSubmitNote(item, form);
+    setForm({
+      type: noteTypeOptions[0],
+      relation: relationOptions[0],
+      content: "",
+      sourceUrl: "",
+      contact: "",
+    });
+    setSubmitted(true);
+    setShowForm(false);
+  }
+
+  return (
+    <div className="detail-panel community-panel">
+      <div className="community-panel__header">
+        <div>
+          <span className="detail-label">学生补充信息</span>
+          <p className="detail-note">只展示已审核条目；新提交内容会先进入本机待审核队列，不会自动公开。</p>
+        </div>
+        <button type="button" className="link-button" onClick={() => setShowForm((value) => !value)}>
+          <MessageSquare aria-hidden="true" />
+          补充信息
+        </button>
+      </div>
+
+      {approvedNotes.length > 0 ? (
+        <div className="community-note-list">
+          {approvedNotes.map((note) => (
+            <article key={`${note.type}-${note.updatedAt}-${note.summary}`} className="community-note">
+              <div>
+                <Chip tone="green">已审核</Chip>
+                <Chip>{note.type}</Chip>
+                {note.updatedAt && <span>{note.updatedAt}</span>}
+              </div>
+              <p>{note.summary}</p>
+              {note.sourceUrl && (
+                <a href={note.sourceUrl} target="_blank" rel="noreferrer">
+                  查看来源
+                  <ArrowUpRight aria-hidden="true" />
+                </a>
+              )}
+            </article>
+          ))}
+        </div>
+      ) : (
+        <p className="detail-copy">暂无已审核学生补充。</p>
+      )}
+
+      {pendingCount > 0 && <p className="detail-note">本机已有 {pendingCount} 条关于该导师的待审核补充，可在“来源与建议”页复制审核。</p>}
+      {submitted && <p className="detail-note">已加入本机待审核队列，审核通过前不会展示给其他访问者。</p>}
+
+      {showForm && (
+        <form className="community-form" onSubmit={handleSubmit}>
+          <div className="community-form__grid">
+            <label className="field">
+              <span>补充类型</span>
+              <select value={form.type} onChange={(event) => updateField("type", event.target.value)}>
+                {noteTypeOptions.map((type) => <option key={type}>{type}</option>)}
+              </select>
+            </label>
+            <label className="field">
+              <span>来源关系</span>
+              <select value={form.relation} onChange={(event) => updateField("relation", event.target.value)}>
+                {relationOptions.map((relation) => <option key={relation}>{relation}</option>)}
+              </select>
+            </label>
+          </div>
+          <label className="field">
+            <span>补充内容</span>
+            <textarea
+              value={form.content}
+              onChange={(event) => updateField("content", event.target.value)}
+              placeholder="写可核验、具体的信息，例如招生名额、研究方向变化、公开邮箱、课题组页面或当年通知线索。"
+              rows={4}
+            />
+          </label>
+          <div className="community-form__grid">
+            <label className="field">
+              <span>来源链接</span>
+              <input
+                value={form.sourceUrl}
+                onChange={(event) => updateField("sourceUrl", event.target.value)}
+                placeholder="官网/通知/论文/课题组页面链接，可留空"
+              />
+            </label>
+            <label className="field">
+              <span>联系信息</span>
+              <input
+                value={form.contact}
+                onChange={(event) => updateField("contact", event.target.value)}
+                placeholder="可选，仅供审核联系，不公开展示"
+              />
+            </label>
+          </div>
+          <div className="community-form__actions">
+            <p>{canSubmit ? "提交后进入本机待审核队列。" : "至少填写 12 个字的具体内容。"}</p>
+            <button type="submit" className="link-button link-button--strong" disabled={!canSubmit}>
+              <Send aria-hidden="true" />
+              加入待审核
+            </button>
+          </div>
+        </form>
+      )}
+    </div>
+  );
+}
+
+function PendingReviewPanel({ pendingSubmissions, onClearPending }) {
+  const [copyState, setCopyState] = useState("");
+  const exportText = JSON.stringify(pendingSubmissions, null, 2);
+
+  async function handleCopy() {
+    const copied = await copyText(exportText);
+    setCopyState(copied ? "已复制待审核 JSON" : "当前浏览器不支持自动复制，请手动选择复制");
+  }
+
+  return (
+    <div className="review-panel">
+      <div className="review-panel__header">
+        <div>
+          <MessageSquare aria-hidden="true" />
+          <h3>待审核学生补充</h3>
+        </div>
+        <Chip tone={pendingSubmissions.length ? "amber" : "green"}>{pendingSubmissions.length} 条待审</Chip>
+      </div>
+      <p>
+        投稿先保存在当前浏览器本地。审核通过后，把可信条目整理到 <code>src/communityNotes.js</code>，前台才会展示。
+      </p>
+      <textarea className="review-export" readOnly value={exportText} rows={pendingSubmissions.length ? 10 : 4} />
+      <div className="review-panel__actions">
+        <button type="button" className="link-button" onClick={handleCopy} disabled={!pendingSubmissions.length}>
+          <Copy aria-hidden="true" />
+          复制待审 JSON
+        </button>
+        <button type="button" className="link-button" onClick={onClearPending} disabled={!pendingSubmissions.length}>
+          清空本机待审
+        </button>
+        {copyState && <span>{copyState}</span>}
+      </div>
+    </div>
+  );
+}
+
+function SupervisorCard({ item, expanded, onToggle, pendingCount, onSubmitNote }) {
   const directions = getDirectionItems(item);
   const evidence = getEvidenceSummary(item);
   const progress = `${(evidence.count / evidence.total) * 100}%`;
@@ -674,6 +890,8 @@ function SupervisorCard({ item, expanded, onToggle }) {
             </div>
           </div>
 
+          <CommunityNotesPanel item={item} pendingCount={pendingCount} onSubmitNote={onSubmitNote} />
+
           <div className="action-row">
             {item.email && (
               <a className="link-button link-button--strong" href={`mailto:${item.email}`}>
@@ -741,6 +959,34 @@ export default function App() {
   const [searchQ, setSearchQ] = useState("");
   const [expanded, setExpanded] = useState(null);
   const [activeTab, setActiveTab] = useState("database");
+  const [pendingSubmissions, setPendingSubmissions] = useState(() => safeReadPendingSubmissions());
+
+  function handleSubmitNote(item, form) {
+    const submission = {
+      id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+      status: "pending",
+      schoolKey: item.schoolKey,
+      school: item.school,
+      teacherName: item.name,
+      teacherId: item.id,
+      type: form.type,
+      relation: form.relation,
+      content: form.content.trim(),
+      sourceUrl: form.sourceUrl.trim(),
+      contactForReview: form.contact.trim(),
+      submittedAt: new Date().toISOString(),
+    };
+    setPendingSubmissions((current) => {
+      const next = [submission, ...current];
+      writePendingSubmissions(next);
+      return next;
+    });
+  }
+
+  function handleClearPending() {
+    setPendingSubmissions([]);
+    writePendingSubmissions([]);
+  }
 
   const stats = useMemo(() => {
     const emailCount = supervisors.filter((item) => item.email).length;
@@ -802,7 +1048,7 @@ export default function App() {
             <span>公开来源记录</span>
           </div>
           <strong>{supervisors.length}</strong>
-          <p>两院导师/师资索引</p>
+          <p>两院导师信息</p>
           <div className="hero-bars" aria-hidden="true">
             <span style={{ height: "72%" }} />
             <span style={{ height: "48%" }} />
@@ -885,6 +1131,8 @@ export default function App() {
                 item={item}
                 expanded={expanded === item.id}
                 onToggle={() => setExpanded(expanded === item.id ? null : item.id)}
+                pendingCount={pendingSubmissions.filter((entry) => getPendingKey(item) === `${entry.schoolKey}:${entry.teacherName}`).length}
+                onSubmitNote={handleSubmitNote}
               />
             ))}
           </div>
@@ -907,6 +1155,8 @@ export default function App() {
           <SectionTitle eyebrow="来源与建议" title="把不确定信息留给官网复核">
             页面只做公开信息索引和联系准备提示，不替代当年招生目录、学院通知或导师本人确认。
           </SectionTitle>
+
+          <PendingReviewPanel pendingSubmissions={pendingSubmissions} onClearPending={handleClearPending} />
 
           <div className="source-grid">
             {sourceCards.map((source) => (
