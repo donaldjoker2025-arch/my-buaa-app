@@ -11,6 +11,7 @@ const INDEX_TIMEOUT_MS = 60000;
 const PROFILE_TIMEOUT_MS = 2500;
 const FETCH_PROFILE_DETAILS = process.env.BUAA_FETCH_PROFILES === "1";
 const MAX_SHI_SEARCH_PAGES = 12;
+const PROFILE_BATCH_SIZE = 8;
 
 const URLS = {
   bmeTeachers: "https://bme.buaa.edu.cn/teachers.aspx?catID=7",
@@ -26,6 +27,10 @@ const URLS = {
 
 const BME_BASE = "https://bme.buaa.edu.cn/";
 const MSE_BASE = "https://ygy.buaa.edu.cn/szdw1/szryxx.htm";
+const SCHOOL_HOST_RE = /(?:^|\.)?(?:bme|ygy)\.buaa\.edu\.cn$/i;
+const SHI_HOST_RE = /(?:^|\.)?shi\.buaa\.edu\.cn$/i;
+const SUMMARY_FORBIDDEN_RE = /教育背景|教育经历|学习经历|工作经历|社会兼职|学术兼职|联系方式|电子邮箱|开授课程|同专业|获得.*学位|博士学位|大学本科|委员会|优秀教师奖|优秀青年|新世纪优秀人才|入选.*人才|支持计划|获奖|奖励|代表性论文|近五年代表性论著|获授权|高被引|国家自然科学基金|国家重点研发|项目负责人|基金|发表|期刊|会议|SCI|ESI|IEEE/i;
+const DIRECTION_FORBIDDEN_RE = /师资索引|教师索引|人员列表|个人页面|页面入口|教育背景|教育经历|学习经历|工作经历|代表性|科研项目|论文|联系方式|电子邮箱|招生信息|个人简介|简介】|学术荣誉|荣誉与奖励|国家自然科学基金|国家重点研发|基金|项目|课题|面上项目|青年项|优秀青年|新世纪优秀人才|入选|支持计划|获授权|获奖|奖励|院士|获得.*学位|^\d{4}年|至今|社会兼职|学术兼职|同专业|开授课程|委员会|大学|相关成果|发表|期刊|会议|高被引|被引|SCI|ESI|Nature|Cancer Research|Medical Image Analysis|NeuroImage|Human Brain Mapping|IEEE|MICCAI|CVPR|IPMI/i;
 const LOCAL_FALLBACKS = {
   "bme-teachers.html": ".codex-bme-teachers.html",
   "bme-phd-2026.html": ".codex-bme-phd2026.html",
@@ -72,6 +77,26 @@ function normalizeUrl(href, base) {
   } catch {
     return undefined;
   }
+}
+
+function getUrlHost(url) {
+  try {
+    return new URL(url).hostname;
+  } catch {
+    return "";
+  }
+}
+
+function isShiTeacherHome(url) {
+  return SHI_HOST_RE.test(getUrlHost(url)) && String(url).includes("/zh_CN/index.htm");
+}
+
+function isSchoolOfficialUrl(url) {
+  return SCHOOL_HOST_RE.test(getUrlHost(url));
+}
+
+function firstValue(...values) {
+  return values.find((value) => value !== undefined && value !== "");
 }
 
 async function ensureDir() {
@@ -148,7 +173,10 @@ function pickNames(details, names) {
 }
 
 function getNamesMissingShiProfile(details, names) {
-  return Array.from(names).filter((name) => !details[name]?.profileUrl?.includes("shi.buaa.edu.cn"));
+  return Array.from(names).filter((name) => {
+    const detail = details[name] ?? {};
+    return !isShiTeacherHome(detail.teacherHomeUrl) && !isShiTeacherHome(detail.profileUrl);
+  });
 }
 
 function cacheNameFor(url, prefix, name) {
@@ -187,6 +215,19 @@ function uniqueItems(items) {
   return Array.from(new Set(items.filter(Boolean)));
 }
 
+function cleanTag(tag) {
+  const text = cleanText(tag);
+  if (!text) return undefined;
+  if (text === "硕士生导师" || text === "博士生导师" || text === "兼职导师") return text;
+  if (DIRECTION_FORBIDDEN_RE.test(text) || SUMMARY_FORBIDDEN_RE.test(text)) return undefined;
+  if (text.length > 42) return undefined;
+  return text;
+}
+
+function cleanTags(tags) {
+  return uniqueItems((tags ?? []).map(cleanTag).filter(Boolean));
+}
+
 function getShiSearchAdvisorTags(item) {
   return Array.from(new Set([
     ...getAdvisorTags(`${item.gtutor ?? ""} ${item.doctorTutor ?? ""} ${item.prorank ?? ""}`),
@@ -195,17 +236,23 @@ function getShiSearchAdvisorTags(item) {
 
 function normalizeShiProfileUrl(url) {
   const profileUrl = normalizeUrl(url, "https://shi.buaa.edu.cn/");
-  return profileUrl?.replace(/^http:\/\//, "https://");
+  const httpsUrl = profileUrl?.replace(/^http:\/\//, "https://");
+  const homeMatch = httpsUrl?.match(/^(https:\/\/shi\.buaa\.edu\.cn\/[^/]+\/zh_CN\/index)(?:\.htm|\/.*)?$/);
+  return homeMatch ? `${homeMatch[1]}.htm` : httpsUrl;
 }
 
 function getCleanResearchSummary(value) {
   const summary = cleanText(value)
-    .replace(/^【?(研究方向|研究领域|招生方向|教育背景)】?[:：]?/, "")
-    .slice(0, 180);
+    .replace(/^【?(研究方向|研究领域|招生方向|主要研究方向|科研方向|教育背景)】?[:：]?/, "")
+    .replace(/^(近年来)?(研究)?(主要)?(聚焦于|集中于|主要包括|包括|围绕|主要从事)/, "")
+    .trim()
+    .slice(0, 220);
   if (!summary || summary.length < 12) return undefined;
   if (/@buaa\.edu\.cn|E-?Mail|电子邮箱|联系方式/i.test(summary)) return undefined;
   if (/^[等及、，。；\s]+项目/.test(summary)) return undefined;
   if (/[\u4e00-\u9fa5]{2,4}\s*(教授|副教授|讲师|研究员|副研究员|硕导|博导)/.test(summary)) return undefined;
+  if (/^(?:20\d{2}|19\d{2})[年\-\/.]/.test(summary)) return undefined;
+  if (SUMMARY_FORBIDDEN_RE.test(summary)) return undefined;
   return summary;
 }
 
@@ -247,10 +294,12 @@ function cleanDirectionItem(value) {
   const rawItem = cleanText(value);
   if (/^(通过|利用|结合|解析|探索|开展|加强|重点|针对|研发|实现|提升|研究制定|协同|对人体|在全基因组|本实验室|基于|常用|上述|这些|为制定|制定|催生|推动|参与|担任|聚焦于|将)/.test(rawItem)) return undefined;
   const item = rawItem
-    .replace(/^[】\]）),，、\s]+|[,，、\s.。…]+$/g, "")
+    .replace(/^[】\]）),，、.。．\s]+|[,，、\s.。…]+$/g, "")
     .replace(/^[：:]\s*/, "")
     .replace(/^\[\d+\]\s*/, "")
     .replace(/^\d+[）)、.]\s*/, "")
+    .replace(/^\d+\s+/, "")
+    .replace(/^[a-z][.、]\s*/i, "")
     .replace(/[。；;].*$/, "")
     .replace(/[，,]\s*(?:以|研究|开发|实现|解决|特别是|主要|集中|通过|结合|为|并|探索|解析|服务|防止|主持|承担|担任).*$/, "")
     .replace(/^及成果】\s*/, "")
@@ -270,7 +319,7 @@ function cleanDirectionItem(value) {
     .replace(/主$/, "");
   if (item.length < 4 || item.length > 52) return undefined;
   if (!/[\u4e00-\u9fa5]/.test(item)) return undefined;
-  if (/(师资索引|教师索引|人员列表|个人页面|页面入口|教育背景|工作经历|代表性|科研项目|论文|联系方式|电子邮箱|招生信息|个人简介|简介】|学术荣誉|荣誉与奖励|国家自然科学基金|国家重点研发|面上项目|青年项|优秀青年|新世纪优秀人才|入选|支持计划|获授权|获奖|奖励|获得.*学位|^\d{4}年|相关成果|发表|期刊|会议|高被引|被引|SCI|ESI|Nature|Cancer Research|Medical Image Analysis|NeuroImage|Human Brain Mapping|IEEE|MICCAI|CVPR|IPMI)/i.test(item)) return undefined;
+  if (DIRECTION_FORBIDDEN_RE.test(item)) return undefined;
   if (/^(在|以在|建有|结合|解决|开展跨尺度|另一主要方向|清华)/.test(item)) return undefined;
   if (/(其他|能够替代)$/.test(item)) return undefined;
   if (/^(包括|具体包括|主要从事|主持|承担|立足学科交叉|主持在研多项)$/.test(item)) return undefined;
@@ -291,13 +340,9 @@ function getResearchSummary(text) {
   const normalized = cleanText(text);
   const sections = [
     /(?:【研究方向】|研究方向[:：]?|主要研究方向[:：]?|招生方向[:：]?)(.{16,220}?)(?:【|教育背景|工作经历|代表性|科研项目|论文|联系方式|$)/,
-    /近五年代表性论著[:：]?(.{30,260}?)(?:科研项目|主持|基金|联系方式|$)/,
     /【研究领域】(.{16,220}?)(?:【|$)/,
     /研究领域[:：]?(.{16,220}?)(?:【|教育背景|工作经历|代表性|科研项目|论文|$)/,
-    /代表性科研论文[:：]?(.{30,260}?)(?:科研项目|基金|联系方式|$)/,
-    /代表性论文[:：]?(.{30,260}?)(?:科研项目|基金|联系方式|$)/,
-    /主持(?:国家自然科学基金|基金|项目)(.{8,180}?)(?:。|；|;|$)/,
-    /(国家自然科学基金.{8,180}?)(?:。|；|;|$)/,
+    /主要从事(.{12,220}?)(?:的研究|研究工作|领域|技术研究|$)/,
   ];
   for (const section of sections) {
     const match = normalized.match(section);
@@ -327,13 +372,26 @@ function parseBmeTeacherIndex(html) {
   const details = {};
   $("a").each((_, el) => {
     const name = cleanName($(el).text());
-    const profileUrl = normalizeUrl($(el).attr("href"), BME_BASE);
-    if (!name || !profileUrl || !/(teacherInfo|shi\.buaa\.edu\.cn)/.test(profileUrl)) return;
-    details[name] ??= {
-      profileUrl,
-      sourceUrl: profileUrl,
-      tags: [],
-    };
+    const url = normalizeUrl($(el).attr("href"), BME_BASE);
+    if (!name || !url || !/(teacherInfo|shi\.buaa\.edu\.cn)/.test(url)) return;
+    const current = details[name] ?? { tags: [] };
+    if (SHI_HOST_RE.test(getUrlHost(url))) {
+      const teacherHomeUrl = normalizeShiProfileUrl(url);
+      details[name] = {
+        ...current,
+        teacherHomeUrl,
+        profileUrl: current.profileUrl ?? teacherHomeUrl,
+      };
+      return;
+    }
+    details[name] = isSchoolOfficialUrl(url)
+      ? {
+          ...current,
+          officialUrl: url,
+          profileUrl: url,
+          sourceUrl: url,
+        }
+      : current;
   });
   return details;
 }
@@ -348,8 +406,8 @@ function parseShiTeacherList(html, baseUrl) {
     if (!name || ["首页", "下页", "上页", "尾页"].includes(name)) return;
     const title = cleanText(rawTitle);
     details[name] ??= {
+      teacherHomeUrl: profileUrl,
       profileUrl,
-      sourceUrl: profileUrl,
       title: title || undefined,
       tags: getAdvisorTags(`${title} ${name}`),
     };
@@ -403,13 +461,15 @@ function getShiTeacherPageUrls(html, baseUrl) {
 async function getShiTeacherDetails(indexUrl, cachePrefix) {
   const firstPage = await readOptionalUrl(indexUrl, `${cachePrefix}-shi-teachers-1.html`);
   if (!firstPage) return {};
-  const pages = [{ html: firstPage, baseUrl: indexUrl }];
   const pageUrls = getShiTeacherPageUrls(firstPage, indexUrl).slice(1);
-  for (const url of pageUrls) {
-    const page = new URL(url).searchParams.get("PAGENUM") ?? "1";
-    const html = await readOptionalUrl(url, `${cachePrefix}-shi-teachers-${page}.html`);
-    if (html) pages.push({ html, baseUrl: url });
-  }
+  const remainingPages = await Promise.all(
+    pageUrls.map(async (url) => {
+      const page = new URL(url).searchParams.get("PAGENUM") ?? "1";
+      const html = await readOptionalUrl(url, `${cachePrefix}-shi-teachers-${page}.html`);
+      return html ? { html, baseUrl: url } : null;
+    }),
+  );
+  const pages = [{ html: firstPage, baseUrl: indexUrl }, ...remainingPages.filter(Boolean)];
   return mergeDetails(...pages.map(({ html, baseUrl }) => parseShiTeacherList(html, baseUrl)));
 }
 
@@ -478,8 +538,8 @@ function parseShiSearchResult(jsonTexts, name) {
   const [profileUrl, match] = matches[0];
   return {
     [name]: {
+      teacherHomeUrl: profileUrl,
       profileUrl,
-      sourceUrl: profileUrl,
       title: cleanText(match.prorank) || undefined,
       email: getEmail(match.mail ?? ""),
       tags: getShiSearchAdvisorTags(match),
@@ -500,21 +560,26 @@ function getTotalPage(jsonText) {
 
 async function getShiSearchDetails(names) {
   const details = {};
-  for (const name of names) {
-    const jsonTexts = [];
-    const firstJson = await readOptionalUrl(getShiSearchUrl(name), cacheNameForName("shi-search", name, "json"), 8000);
-    if (firstJson) jsonTexts.push(firstJson);
-    const totalPage = Math.min(getTotalPage(firstJson), MAX_SHI_SEARCH_PAGES);
-    for (let page = 2; page <= totalPage; page += 1) {
-      if (hasUniqueShiSearchMatch(jsonTexts, name)) break;
-      const jsonText = await readOptionalUrl(
-        getShiSearchPageUrl(name, page),
-        cacheNameForName(`shi-search-${page}`, name, "json"),
-        8000,
-      );
-      if (jsonText) jsonTexts.push(jsonText);
-    }
-    Object.assign(details, parseShiSearchResult(jsonTexts, name));
+  const nameArray = Array.from(names);
+  for (let index = 0; index < nameArray.length; index += 4) {
+    const batch = nameArray.slice(index, index + 4);
+    const results = await Promise.all(batch.map(async (name) => {
+      const jsonTexts = [];
+      const firstJson = await readOptionalUrl(getShiSearchUrl(name), cacheNameForName("shi-search", name, "json"), 8000);
+      if (firstJson) jsonTexts.push(firstJson);
+      const totalPage = Math.min(getTotalPage(firstJson), MAX_SHI_SEARCH_PAGES);
+      for (let page = 2; page <= totalPage; page += 1) {
+        if (hasUniqueShiSearchMatch(jsonTexts, name)) break;
+        const jsonText = await readOptionalUrl(
+          getShiSearchPageUrl(name, page),
+          cacheNameForName(`shi-search-${page}`, name, "json"),
+          8000,
+        );
+        if (jsonText) jsonTexts.push(jsonText);
+      }
+      return parseShiSearchResult(jsonTexts, name);
+    }));
+    for (const result of results) Object.assign(details, result);
   }
   return details;
 }
@@ -523,20 +588,39 @@ function parseProfilePage(html, url, fallback = {}) {
   const $ = cheerio.load(html, { decodeEntities: true });
   const rawText = getStructuredBodyText($);
   const text = cleanText(rawText);
-  const profileUrl = text.match(/https?:\/\/shi\.buaa\.edu\.cn\/[^\s电子邮箱【]+/)?.[0] ?? url;
+  const foundTeacherHome = normalizeShiProfileUrl(
+    text.match(/https?:\/\/shi\.buaa\.edu\.cn\/[^\s电子邮箱【]+/)?.[0],
+  );
+  const officialUrl = firstValue(
+    isSchoolOfficialUrl(fallback.officialUrl) ? fallback.officialUrl : undefined,
+    isSchoolOfficialUrl(url) ? url : undefined,
+    isSchoolOfficialUrl(fallback.profileUrl) ? fallback.profileUrl : undefined,
+    isSchoolOfficialUrl(fallback.sourceUrl) ? fallback.sourceUrl : undefined,
+  );
+  const teacherHomeUrl = firstValue(
+    fallback.teacherHomeUrl,
+    isShiTeacherHome(fallback.officialUrl) ? normalizeShiProfileUrl(fallback.officialUrl) : undefined,
+    isShiTeacherHome(url) ? url : undefined,
+    isShiTeacherHome(foundTeacherHome) ? foundTeacherHome : undefined,
+    isShiTeacherHome(fallback.profileUrl) ? fallback.profileUrl : undefined,
+  );
+  const profileUrl = officialUrl ?? fallback.profileUrl ?? teacherHomeUrl ?? url;
   const directions = getResearchDirections(rawText);
   const fallbackDirections = fallback.directions?.length
     ? fallback.directions
     : splitDirectionText(fallback.researchSummary);
+  const researchSummary = getResearchSummary(text) ?? getCleanResearchSummary(fallback.researchSummary);
   return {
     ...fallback,
+    officialUrl,
+    teacherHomeUrl,
     profileUrl,
-    sourceUrl: fallback.sourceUrl ?? url,
+    sourceUrl: officialUrl ?? fallback.sourceUrl ?? url,
     title: getTitle(text, fallback.title),
     email: getEmail(text) ?? fallback.email,
     tags: Array.from(new Set([...(fallback.tags ?? []), ...getAdvisorTags(text)])),
     directions: directions.length ? directions : fallbackDirections,
-    researchSummary: getResearchSummary(text) ?? fallback.researchSummary,
+    researchSummary,
   };
 }
 
@@ -550,6 +634,8 @@ function parseMseListLikePage(html, baseUrl) {
     const sourceUrl = normalizeUrl($(el).attr("href"), baseUrl);
     if (!name || !sourceUrl || !title.includes("老师个人页面")) return;
     details[name] ??= {
+      officialUrl: isSchoolOfficialUrl(sourceUrl) ? sourceUrl : undefined,
+      profileUrl: sourceUrl,
       sourceUrl,
       tags: [],
     };
@@ -560,13 +646,16 @@ function parseMseListLikePage(html, baseUrl) {
     const name = cleanName(anchor.text());
     if (!name) return;
     const text = cleanText($(el).text());
-    const profileUrl = text.match(/https?:\/\/shi\.buaa\.edu\.cn\/[^\s电子邮箱【]+/)?.[0];
+    const profileUrl = normalizeShiProfileUrl(text.match(/https?:\/\/shi\.buaa\.edu\.cn\/[^\s电子邮箱【]+/)?.[0]);
+    const sourceUrl = normalizeUrl(anchor.attr("href"), baseUrl);
     details[name] = {
       ...(details[name] ?? {}),
       title: getTitle(text, details[name]?.title ?? "师资人员"),
       email: getEmail(text),
-      profileUrl,
-      sourceUrl: normalizeUrl(anchor.attr("href"), baseUrl),
+      officialUrl: isSchoolOfficialUrl(sourceUrl) ? sourceUrl : details[name]?.officialUrl,
+      profileUrl: isSchoolOfficialUrl(sourceUrl) ? sourceUrl : (details[name]?.profileUrl ?? profileUrl),
+      teacherHomeUrl: isShiTeacherHome(profileUrl) ? profileUrl : details[name]?.teacherHomeUrl,
+      sourceUrl,
       tags: Array.from(new Set([...(details[name]?.tags ?? []), ...getAdvisorTags(text)])),
       directions: getResearchDirections(text),
       researchSummary: getResearchSummary(text),
@@ -603,8 +692,8 @@ function parsePhdAdmissions(html, sourceUrl, targetNames) {
 function uniqueAdmissions(items) {
   const seen = new Set();
   return items.filter((item) => {
-    const key = `${item.label ?? ""}|${item.sourceUrl ?? ""}`;
-    if (seen.has(key)) return false;
+    const key = `${item?.label ?? ""}|${item?.sourceUrl ?? ""}`;
+    if (!item || seen.has(key)) return false;
     seen.add(key);
     return true;
   });
@@ -615,10 +704,45 @@ function mergeDetails(...objects) {
   for (const object of objects) {
     for (const [name, detail] of Object.entries(object)) {
       const current = merged[name] ?? {};
+      const cleanDetail = Object.fromEntries(
+        Object.entries(detail).filter(([, value]) => value !== undefined && value !== ""),
+      );
+      const officialUrl = firstValue(
+        isSchoolOfficialUrl(cleanDetail.officialUrl) ? cleanDetail.officialUrl : undefined,
+        isSchoolOfficialUrl(cleanDetail.profileUrl) ? cleanDetail.profileUrl : undefined,
+        isSchoolOfficialUrl(cleanDetail.sourceUrl) ? cleanDetail.sourceUrl : undefined,
+        isSchoolOfficialUrl(current.officialUrl) ? current.officialUrl : undefined,
+      );
+      const teacherHomeUrl = firstValue(
+        cleanDetail.teacherHomeUrl,
+        isShiTeacherHome(cleanDetail.officialUrl) ? normalizeShiProfileUrl(cleanDetail.officialUrl) : undefined,
+        isShiTeacherHome(cleanDetail.profileUrl) ? cleanDetail.profileUrl : undefined,
+        isShiTeacherHome(cleanDetail.sourceUrl) ? cleanDetail.sourceUrl : undefined,
+        isShiTeacherHome(current.officialUrl) ? normalizeShiProfileUrl(current.officialUrl) : undefined,
+        current.teacherHomeUrl,
+      );
+      const profileUrl = firstValue(
+        officialUrl,
+        isSchoolOfficialUrl(current.profileUrl) ? current.profileUrl : undefined,
+        isShiTeacherHome(current.profileUrl) ? undefined : current.profileUrl,
+        teacherHomeUrl,
+        cleanDetail.profileUrl,
+        current.profileUrl,
+      );
+      const sourceUrl = firstValue(officialUrl, cleanDetail.sourceUrl, current.sourceUrl, profileUrl);
+      const researchSummary = firstValue(
+        getCleanResearchSummary(cleanDetail.researchSummary),
+        getCleanResearchSummary(current.researchSummary),
+      );
       merged[name] = {
         ...current,
-        ...Object.fromEntries(Object.entries(detail).filter(([, value]) => value !== undefined && value !== "")),
-        tags: Array.from(new Set([...(current.tags ?? []), ...(detail.tags ?? [])])),
+        ...cleanDetail,
+        officialUrl,
+        teacherHomeUrl,
+        profileUrl,
+        sourceUrl,
+        researchSummary,
+        tags: cleanTags([...(current.tags ?? []), ...(detail.tags ?? [])]),
         directions: cleanDirectionItems([...(current.directions ?? []), ...(detail.directions ?? [])]),
         admissions: uniqueAdmissions([...(current.admissions ?? []), ...(detail.admissions ?? [])]),
       };
@@ -628,34 +752,64 @@ function mergeDetails(...objects) {
 }
 
 async function getMseDetailPages() {
-  const pages = [];
-  const firstPage = await readOptionalUrl(URLS.mseDetail, "mse-detail-0.html");
-  if (firstPage) pages.push({ html: firstPage, baseUrl: URLS.mseDetail });
-  for (let page = 1; page <= 14; page += 1) {
-    const url = `https://ygy.buaa.edu.cn/szdw1/szryxx/${page}.htm`;
-    const html = await readOptionalUrl(url, `mse-detail-${page}.html`);
-    if (html) pages.push({ html, baseUrl: url });
+  const configs = [
+    { url: URLS.mseDetail, cacheName: "mse-detail-0.html" },
+    ...Array.from({ length: 14 }, (_, index) => ({
+      url: `https://ygy.buaa.edu.cn/szdw1/szryxx/${index + 1}.htm`,
+      cacheName: `mse-detail-${index + 1}.html`,
+    })),
+  ];
+  const pages = await Promise.all(
+    configs.map(async ({ url, cacheName }) => {
+      const html = await readOptionalUrl(url, cacheName);
+      return html ? { html, baseUrl: url } : null;
+    }),
+  );
+  return pages.filter(Boolean);
+}
+
+function getProfileFetchUrl(detail) {
+  return firstValue(
+    detail.officialUrl,
+    isSchoolOfficialUrl(detail.profileUrl) ? detail.profileUrl : undefined,
+    isSchoolOfficialUrl(detail.sourceUrl) ? detail.sourceUrl : undefined,
+    detail.teacherHomeUrl,
+    detail.profileUrl,
+    detail.sourceUrl,
+  );
+}
+
+function getProfileCachePrefixes(url, schoolKey) {
+  if (isSchoolOfficialUrl(url) && getUrlHost(url).includes("ygy.buaa.edu.cn")) return ["mse-official", "mse"];
+  if (isSchoolOfficialUrl(url) && getUrlHost(url).includes("bme.buaa.edu.cn")) return ["bme", "bme-official"];
+  return [schoolKey];
+}
+
+function findCachedProfile(cachedFiles, url, schoolKey, name) {
+  const prefixes = getProfileCachePrefixes(url, schoolKey);
+  for (const prefix of prefixes) {
+    const exactName = cacheNameFor(url, prefix, name);
+    if (cachedFiles.includes(exactName)) return exactName;
   }
-  return pages;
+  const safeName = name.replace(/[\\/:*?"<>|]/g, "_");
+  return cachedFiles.find((file) =>
+    prefixes.some((prefix) => file.startsWith(`${prefix}-${safeName}-`)),
+  );
 }
 
 async function enrichProfiles(details, schoolKey) {
-  const entries = Object.entries(details).filter(([, detail]) => detail.profileUrl || detail.sourceUrl);
+  const entries = Object.entries(details).filter(([, detail]) => getProfileFetchUrl(detail));
   const enriched = {};
-  for (let index = 0; index < entries.length; index += 1) {
-    const batch = entries.slice(index, index + 8);
+  const cachedFiles = await fs.readdir(CACHE_DIR).catch(() => []);
+  for (let index = 0; index < entries.length; index += PROFILE_BATCH_SIZE) {
+    const batch = entries.slice(index, index + PROFILE_BATCH_SIZE);
     const results = await Promise.all(batch.map(async ([name, detail]) => {
-      const url = detail.profileUrl ?? detail.sourceUrl;
+      const url = getProfileFetchUrl(detail);
       if (!url) return [name, detail];
-      const hasUsefulDetail = detail.email && detail.tags?.length && detail.directions?.length && (detail.researchSummary || detail.profileUrl);
-      if (hasUsefulDetail) return [name, detail];
       try {
-        const requestedCacheName = cacheNameFor(url, schoolKey, name);
-        const cachedFiles = await fs.readdir(CACHE_DIR).catch(() => []);
-        const safeName = name.replace(/[\\/:*?"<>|]/g, "_");
-        const cacheName = cachedFiles.includes(requestedCacheName)
-          ? requestedCacheName
-          : cachedFiles.find((file) => file.startsWith(`${schoolKey}-${safeName}-`));
+        const primaryPrefix = getProfileCachePrefixes(url, schoolKey)[0];
+        const requestedCacheName = cacheNameFor(url, primaryPrefix, name);
+        const cacheName = findCachedProfile(cachedFiles, url, schoolKey, name);
         if (!cacheName && !FETCH_PROFILE_DETAILS) return [name, detail];
         const html = cacheName
           ? await fs.readFile(path.join(CACHE_DIR, cacheName), "utf8")
@@ -673,16 +827,16 @@ async function enrichProfiles(details, schoolKey) {
 async function getMseOfficialDetails(mseProfiles) {
   const entries = Array.from(mseProfiles.entries());
   const details = {};
-  for (let index = 0; index < entries.length; index += 1) {
-    const batch = entries.slice(index, index + 8);
+  for (let index = 0; index < entries.length; index += PROFILE_BATCH_SIZE) {
+    const batch = entries.slice(index, index + PROFILE_BATCH_SIZE);
     const results = await Promise.all(batch.map(async ([name, url]) => {
       if (!url) return [name, {}];
-      const html = await readOptionalUrl(url, cacheNameFor(url, "mse-official", name), PROFILE_TIMEOUT_MS);
-      if (!html) return [name, { sourceUrl: url, tags: [] }];
-      const parsed = parseProfilePage(html, url, { sourceUrl: url, tags: [] });
-      if (!parsed.profileUrl?.includes("shi.buaa.edu.cn")) {
-        delete parsed.profileUrl;
-      }
+      const fallback = isSchoolOfficialUrl(url)
+        ? { officialUrl: url, profileUrl: url, sourceUrl: url, tags: [] }
+        : { teacherHomeUrl: normalizeShiProfileUrl(url), profileUrl: normalizeShiProfileUrl(url), sourceUrl: url, tags: [] };
+      const html = await readOptionalUrl(url, cacheNameFor(url, isSchoolOfficialUrl(url) ? "mse-official" : "mse", name), PROFILE_TIMEOUT_MS);
+      if (!html) return [name, fallback];
+      const parsed = parseProfilePage(html, url, fallback);
       return [name, parsed];
     }));
     for (const [name, detail] of results) details[name] = detail;
@@ -706,7 +860,7 @@ function addDirectionTags(details) {
     return [name, {
       ...detail,
       directions,
-      tags: uniqueItems([...(detail.tags ?? []), ...directions]),
+      tags: cleanTags([...(detail.tags ?? []), ...directions]),
     }];
   }));
 }
@@ -715,23 +869,52 @@ async function main() {
   const existing = await loadExistingDetails();
   const targetNames = getTargetNames(await fs.readFile(APP_SOURCE, "utf8"));
 
-  const shiTeachers = await getShiSearchDetails(targetNames.all);
-  const mseOfficialDetails = await getMseOfficialDetails(targetNames.mseProfiles);
-  const bmePhdHtml = await readOptionalUrl(URLS.bmePhd2026, "bme-phd-2026.html");
-  const msePhdHtml = await readOptionalUrl(URLS.msePhd2026, "mse-phd-2026.html");
+  const [
+    bmeTeacherHtml,
+    bmeShiTeachers,
+    msePeopleHtml,
+    msePages,
+    mseShiTeachers,
+    mseOfficialDetails,
+    bmePhdHtml,
+    msePhdHtml,
+  ] = await Promise.all([
+    readOptionalUrl(URLS.bmeTeachers, "bme-teachers.html"),
+    getShiTeacherDetails(URLS.bmeShiTeachers, "bme"),
+    readOptionalUrl(URLS.msePeople, "mse-people.html"),
+    getMseDetailPages(),
+    getShiTeacherDetails(URLS.mseShiTeachers, "mse"),
+    getMseOfficialDetails(targetNames.mseProfiles),
+    readOptionalUrl(URLS.bmePhd2026, "bme-phd-2026.html"),
+    readOptionalUrl(URLS.msePhd2026, "mse-phd-2026.html"),
+  ]);
+
+  const bmeTeachers = bmeTeacherHtml ? parseBmeTeacherIndex(bmeTeacherHtml) : {};
+  const shiTeachers = mergeDetails(bmeShiTeachers, mseShiTeachers);
+  const msePeopleDetails = msePeopleHtml ? parseMseListLikePage(msePeopleHtml, URLS.msePeople) : {};
+  const mseDetails = mergeDetails(
+    ...msePages.map(({ html, baseUrl }) => parseMseListLikePage(html, baseUrl)),
+  );
   const admissions = mergeDetails(
     existing.admissions ?? {},
     bmePhdHtml ? parsePhdAdmissions(bmePhdHtml, URLS.bmePhd2026, targetNames.all) : {},
     msePhdHtml ? parsePhdAdmissions(msePhdHtml, URLS.msePhd2026, targetNames.all) : {},
   );
-  const baseBmeDetails = pickNames(mergeDetails(existing.bme ?? {}, shiTeachers, admissions), targetNames.bme);
-  const baseMseDetails = pickNames(mergeDetails(existing.mse ?? {}, shiTeachers, mseOfficialDetails, admissions), targetNames.mse);
+  const baseBmeDetails = pickNames(mergeDetails(existing.bme ?? {}, shiTeachers, bmeTeachers, admissions), targetNames.bme);
+  const baseMseDetails = pickNames(
+    mergeDetails(existing.mse ?? {}, shiTeachers, msePeopleDetails, mseDetails, mseOfficialDetails, admissions),
+    targetNames.mse,
+  );
+  const shiSearchTeachers = await getShiSearchDetails(new Set([
+    ...getNamesMissingShiProfile(baseBmeDetails, targetNames.bme),
+    ...getNamesMissingShiProfile(baseMseDetails, targetNames.mse),
+  ]));
   const bmeEnriched = deriveDirectionsFromSummary(await enrichProfiles(
-    baseBmeDetails,
+    pickNames(mergeDetails(baseBmeDetails, shiSearchTeachers), targetNames.bme),
     "bme",
   ));
   const mseEnriched = addDirectionTags(deriveDirectionsFromSummary(await enrichProfiles(
-    baseMseDetails,
+    pickNames(mergeDetails(baseMseDetails, shiSearchTeachers), targetNames.mse),
     "mse",
   )));
   const sortObject = (object) => Object.fromEntries(Object.entries(object).sort(([a], [b]) => a.localeCompare(b, "zh-Hans-CN")));

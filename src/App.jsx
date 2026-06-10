@@ -294,8 +294,10 @@ function buildBmeSupervisors() {
           admissions: detail.admissions ?? [],
           source: "生物与医学工程学院硕士研究生培养方向设置及指导教师对照表",
           sourceUrl: BME_SOURCE_URL,
-          profileUrl: detail.profileUrl,
-          profileSourceUrl: detail.sourceUrl,
+          officialUrl: detail.officialUrl,
+          profileUrl: detail.profileUrl ?? detail.officialUrl,
+          teacherHomeUrl: detail.teacherHomeUrl,
+          profileSourceUrl: detail.sourceUrl ?? detail.officialUrl,
         });
       }
 
@@ -339,9 +341,11 @@ function buildMseSupervisors() {
       researchSummary: supplemental.researchSummary,
       admissions: supplemental.admissions ?? [],
       source: "医学科学与工程学院人员列表及师资人员详细索引",
-      sourceUrl: supplemental.sourceUrl ?? detail.sourceUrl ?? profileUrl,
-      profileUrl: supplemental.profileUrl ?? profileUrl,
-      profileSourceUrl: supplemental.sourceUrl ?? profileUrl,
+      sourceUrl: supplemental.sourceUrl ?? supplemental.officialUrl ?? detail.sourceUrl ?? profileUrl,
+      officialUrl: supplemental.officialUrl,
+      profileUrl: supplemental.profileUrl ?? supplemental.officialUrl ?? profileUrl,
+      teacherHomeUrl: supplemental.teacherHomeUrl,
+      profileSourceUrl: supplemental.sourceUrl ?? supplemental.officialUrl ?? profileUrl,
     };
   });
 }
@@ -464,8 +468,8 @@ function getProfileLinkLabel(url) {
 
 function getEvidenceItems(item) {
   return [
-    { label: "学院官网来源", active: Boolean(item.sourceUrl) },
-    { label: "北航教师主页", active: isBuaaTeacherHome(item.profileUrl) },
+    { label: "学院官网来源", active: Boolean(item.officialUrl ?? item.sourceUrl) },
+    { label: "北航教师主页", active: isBuaaTeacherHome(item.teacherHomeUrl ?? item.profileUrl) },
     { label: "公开方向索引", active: getDirectionItems(item).length > 0 },
     { label: "公开邮箱", active: Boolean(item.email) },
     { label: "导师资格标签", active: hasAdvisorTag(item) },
@@ -491,8 +495,9 @@ function getStudentClues(item) {
     clues.push("适合从医工学院官网个人页进入，重点核对具体课题组方向。");
   }
 
-  if (item.profileUrl) {
-    clues.push(`已整理到${getProfileLinkLabel(item.profileUrl)}，建议优先从主页核对职称、邮箱、课题组和论文项目。`);
+  const primaryProfileUrl = item.officialUrl ?? item.profileUrl;
+  if (primaryProfileUrl) {
+    clues.push(`已整理到${getProfileLinkLabel(primaryProfileUrl)}，建议优先从主页核对职称、邮箱、课题组和论文项目。`);
   } else {
     clues.push("暂未整理到精确个人主页，联系前建议从学院师资页或北航教师主页检索复核。");
   }
@@ -905,6 +910,12 @@ function SupervisorCard({ item, expanded, onToggle, pendingCount, onSubmitNote }
                 {getProfileLinkLabel(item.profileUrl)}
               </a>
             )}
+            {item.teacherHomeUrl && item.teacherHomeUrl !== item.profileUrl && (
+              <a className="link-button" href={item.teacherHomeUrl} target="_blank" rel="noreferrer">
+                <UserRound aria-hidden="true" />
+                北航教师主页
+              </a>
+            )}
             {!item.profileUrl && item.profileSourceUrl && (
               <a className="link-button" href={item.profileSourceUrl} target="_blank" rel="noreferrer">
                 <UserRound aria-hidden="true" />
@@ -1018,6 +1029,8 @@ export default function App() {
           ...item.tags,
           item.researchSummary ?? "",
           item.profileUrl ?? "",
+          item.officialUrl ?? "",
+          item.teacherHomeUrl ?? "",
           item.email ?? "",
           ...(item.admissions ?? []).map((entry) => entry.label),
         ].join(" ").toLowerCase();
