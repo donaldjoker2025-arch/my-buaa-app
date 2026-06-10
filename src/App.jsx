@@ -238,6 +238,14 @@ function parseMentor(rawName) {
   };
 }
 
+function cleanText(value) {
+  return String(value ?? "")
+    .replace(/\u00a0/g, " ")
+    .replace(/[ \t\r\n]+/g, " ")
+    .replace(/ ?([，。；：、]) ?/g, "$1")
+    .trim();
+}
+
 function uniqueItems(items) {
   return Array.from(new Set(items.filter(Boolean)));
 }
@@ -250,6 +258,210 @@ function uniqueAdmissions(items) {
     seen.add(key);
     return true;
   });
+}
+
+const advisorTagSet = new Set(["硕士生导师", "博士生导师", "兼职导师"]);
+const topicStopPatterns = [
+  /^(?:学生信息|暂无内容|个人信息|个人信息职称|职称|背景颜色|生物|材料|成像|传感|分子|国家级领军人才|科技部重点领域创新团队带头人|结题均获优秀|结题优秀)$/u,
+  /var\s+_tsites|ImageScale|点赞|访客|点击次数|发布时间|window\.location|jQuery|qrcode|canvas|codeInfo/u,
+  /近\d+年承担|近五年承担|在研|主持|资助金额|万元|经费|竞赛|挑战杯|擂主|揭榜挂帅/u,
+  /获.*奖|专著|教程|专利|审稿人|通讯作者|第一作者|第一完成人|编委|学报/u,
+  /团队介绍|代表性|科研方向|医工交叉领域|生命保障|人才计划|卓越创新计划|医院/u,
+  /教育背景|教育经历|学习经历|工作经历|教育与/u,
+  /我的研究方向是|还没有行之有效|并不透彻|有望实现|能够替代|具有针对性的|具备融合核心|从分子|以及$/u,
+  /Progress in Materials Science|AI4science|VLA基础大模型/u,
+];
+const topicPrefixPattern = /^(?:长期从事|聚焦于|从事|致力于|重点(?:开展|研究)|主要(?:开展|研究)|侧重|涵盖|围绕|服务|促进|广泛运用|探寻及评估|运用|以解决|以进行|尤其关注|涉及|也涉及|系统地研究|鉴定|充分利用|最大限度地惠及|通过|采用|利用|建立|开展|探索|构建|创建|发明|即|从|对|将|使|让)/u;
+const topicSuffixPatterns = [
+  /等方向$/u,
+  /等领域$/u,
+  /等研究$/u,
+  /等$/u,
+  /的基础研究$/u,
+  /的研究$/u,
+  /研究$/u,
+  /及其应用$/u,
+  /及应用$/u,
+  /与应用$/u,
+  /相关设备研制$/u,
+  /关键技术研究与成果转化应用$/u,
+  /临床应用和产业转化工作$/u,
+  /的开发$/u,
+  /的设计及表征$/u,
+  /的设计与表征$/u,
+  /的设计$/u,
+];
+const topicCanonicalRules = [
+  [/纳米电穿孔/i, "纳米电穿孔"],
+  [/磁粒子成像|MPI/i, "磁粒子成像"],
+  [/医学影像大模型/u, "医学影像大模型"],
+  [/医学影像人工智能|智能医学成像/u, "医学影像人工智能"],
+  [/医学图像处理与可视化智能算法/u, "医学图像处理"],
+  [/医学图像和信号处理/u, "医学图像与信号处理"],
+  [/医疗大数据分析与智能决策算法/u, "医疗大数据分析"],
+  [/专病垂直基础模型和智能体应用/u, "医学智能体应用"],
+  [/多模态分子影像/u, "多模态分子影像"],
+  [/医学图像分析/u, "医学图像分析"],
+  [/深度学习/u, "深度学习"],
+  [/机器学习/u, "机器学习"],
+  [/人工智能/u, "人工智能"],
+  [/认知神经科学/u, "认知神经科学"],
+  [/脑机接口/u, "脑机接口"],
+  [/类脑计算/u, "类脑计算"],
+  [/脑电生理/u, "脑电生理"],
+  [/神经调控/u, "神经调控"],
+  [/康复医学工程/u, "康复医学工程"],
+  [/康复工程/u, "康复工程"],
+  [/生物力学/u, "生物力学"],
+  [/生物机械/u, "生物机械"],
+  [/结构仿生/u, "结构仿生"],
+  [/计算生物力学/u, "计算生物力学"],
+  [/低熔点金属生物医用材料/u, "低熔点金属生物医用材料"],
+  [/柔性电子/u, "柔性电子"],
+  [/肿瘤治疗/u, "肿瘤治疗"],
+  [/骨修复/u, "骨修复"],
+  [/合成生物学与精准医疗/u, "合成生物学与精准医疗"],
+  [/蛋白质组学与生物医学大数据/u, "蛋白质组学"],
+  [/生物医学大数据/u, "生物医学大数据"],
+  [/生物医学光子学/u, "生物医学光子学"],
+  [/医用光子学/u, "医用光子学"],
+  [/拉曼光谱/u, "拉曼光谱"],
+  [/光声成像/u, "光声成像"],
+  [/高光谱成像/u, "高光谱成像"],
+  [/医用光学仪器/u, "医用光学仪器"],
+  [/超结构设计/u, "超结构设计"],
+  [/智能生物材料/u, "智能生物材料"],
+  [/植介入医疗器械/u, "植介入医疗器械"],
+  [/心血管支架/u, "心血管支架"],
+  [/飞行员的抗荷服设计/u, "抗荷服设计"],
+  [/航天员失重性骨质疏松/u, "失重性骨质疏松"],
+  [/组织工程/u, "组织工程"],
+  [/血流动力学/u, "血流动力学"],
+  [/器官芯片/u, "器官芯片"],
+  [/生物传感器/u, "生物传感器"],
+  [/体外诊断检验试剂/u, "体外诊断检验试剂"],
+  [/药物递送/u, "药物递送"],
+  [/精准诊疗/u, "精准诊疗"],
+  [/数字病理/u, "数字病理"],
+  [/基因组学/u, "基因组学"],
+  [/生物信息学/u, "生物信息学"],
+  [/外泌体/u, "外泌体"],
+  [/光学内窥镜/u, "光学内窥镜"],
+  [/脑功能成像/u, "脑功能成像"],
+  [/纳米探针/u, "纳米探针"],
+  [/医疗器械(?:与装备)?/u, "医疗器械"],
+  [/干细胞的力学生物学/u, "干细胞力学生物学"],
+  [/生物材料的细胞学行为/u, "生物材料细胞学行为"],
+  [/纳米材料的生物学效应/u, "纳米材料生物学效应"],
+  [/人体体液蛋白标志物超灵敏检测系统构建/u, "体液蛋白标志物检测"],
+  [/促角膜再生修复的药物及生物材料研发/u, "角膜再生修复"],
+  [/体外诊断检验试剂的研发与验证/u, "体外诊断检验试剂"],
+  [/癌症的诊疗决策/u, "癌症诊疗"],
+  [/神经系统疾病的致病机制及防治策略/u, "神经系统疾病防治"],
+  [/体细胞突变的发生/u, "体细胞突变"],
+  [/病原菌耐药组以及泛基因组/u, "病原菌耐药与泛基因组"],
+  [/细胞与微生物治疗的转化应用/u, "细胞与微生物治疗"],
+  [/智能药物递送/u, "智能药物递送"],
+  [/无标记分子成像/u, "无标记分子成像"],
+  [/工程化外泌体/u, "工程化外泌体"],
+  [/微机电系统传感芯片/u, "微机电系统传感芯片"],
+  [/柔性可穿戴康复辅具/u, "柔性可穿戴康复辅具"],
+  [/柔性穿戴康复机器人/u, "柔性穿戴康复机器人"],
+  [/飞行员的训练伤防护及救治/u, "飞行员训练伤防护"],
+  [/航空与航天医学/u, "航空航天医学"],
+  [/智能供氧技术/u, "智能供氧技术"],
+  [/针灸作用机制/u, "针灸作用机制"],
+  [/针灸现代化装备/u, "针灸现代化装备"],
+];
+const topicKeywordPattern = /生物|医学|影像|成像|图像|信号|材料|力学|工程|器械|芯片|传感|光学|光子|光谱|超声|激光|电生理|脑机|脑|神经|康复|病理|药理|细胞|组织|蛋白|基因|分子|纳米|支架|探针|组学|算法|智能|学习|数据|诊疗|诊断|治疗|修复|递送|仿生|供氧|失重|工效|人因|航天|航空|病毒|微生物|干细胞|再生|金属|电子|内窥镜|骨|肿瘤|血管|心血管|拉曼|多模态/u;
+
+function isAdvisorTag(tag) {
+  return advisorTagSet.has(tag);
+}
+
+function isValidTopicToken(token) {
+  if (!token) return false;
+  if (!/[\u4e00-\u9fa5]/u.test(token)) return false;
+  if (token.length < 2 || token.length > 18) return false;
+  if (/[A-Za-z]/u.test(token)) return false;
+  if (/\s/u.test(token)) return false;
+  if (/[()（）]/u.test(token)) return false;
+  if (/[《》【】#*[\]<>]/u.test(token)) return false;
+  if (/[.:]/u.test(token)) return false;
+  if (/[、，；]/u.test(token)) return false;
+  if (/\d{4}[.-]\d{1,2}|\d{1,2}[.-]\d{4}|\d{3,}/u.test(token)) return false;
+  if (topicStopPatterns.some((pattern) => pattern.test(token))) return false;
+  if (!topicKeywordPattern.test(token)) return false;
+  return true;
+}
+
+function canonicalizeTopicToken(rawToken) {
+  let token = cleanText(rawToken)
+    .replace(/^[([{（【]?\d+[)\]】.、）]?\s*/u, "")
+    .replace(/^[([{（【]?[一二三四五六七八九十]+[)\]】、）]?\s*/u, "")
+    .replace(/^Ø+\s*/u, "")
+    .replace(/^[•·▪◦]\s*/u, "")
+    .replace(/[“”"]/gu, "")
+    .replace(/\((?:[A-Za-z0-9\-./ ]{2,40})\)/gu, "")
+    .replace(/（(?:[A-Za-z0-9\-./ ]{2,40})）/gu, "")
+    .replace(/\s+/gu, " ")
+    .trim();
+  if (!token) return undefined;
+  if (topicStopPatterns.some((pattern) => pattern.test(token))) return undefined;
+
+  token = token
+    .replace(topicPrefixPattern, "")
+    .replace(/^主要从/u, "")
+    .replace(/^其中以/u, "")
+    .replace(/^其中一项/u, "")
+    .replace(/^主要从两个层面开展/u, "")
+    .replace(/^内容主要包括以下五方面/u, "")
+    .replace(/^尤其是/u, "")
+    .trim();
+
+  topicSuffixPatterns.forEach((pattern) => {
+    token = token.replace(pattern, "").trim();
+  });
+  token = token.replace(/[；。]$/u, "").trim();
+
+  for (const [pattern, replacement] of topicCanonicalRules) {
+    if (pattern.test(token)) return replacement;
+  }
+
+  if (/^[（(]/u.test(token) || /[）)]$/u.test(token)) return undefined;
+  if (/[:：]/u.test(token)) return undefined;
+  if (topicStopPatterns.some((pattern) => pattern.test(token))) return undefined;
+  return isValidTopicToken(token) ? token : undefined;
+}
+
+function splitTopicFragments(value) {
+  const source = cleanText(value)
+    .replace(/[“”"]/gu, "")
+    .replace(/\((?:[A-Za-z0-9\-./ ]{2,40})\)/gu, "")
+    .replace(/（(?:[A-Za-z0-9\-./ ]{2,40})）/gu, "")
+    .replace(/[/:：]/gu, "、")
+    .replace(/\s{2,}/gu, "、");
+  return source
+    .split(/[、，；]/u)
+    .flatMap((part) => part.split(/\s+/u))
+    .map((part) => part.trim())
+    .filter(Boolean);
+}
+
+function collectTopicTags(items) {
+  const topics = [];
+  for (const item of items) {
+    const fragments = splitTopicFragments(item);
+    fragments.forEach((fragment) => {
+      const token = canonicalizeTopicToken(fragment);
+      if (token) topics.push(token);
+    });
+    if (!/[、，；]/u.test(String(item ?? ""))) {
+      const wholeToken = canonicalizeTopicToken(item);
+      if (wholeToken) topics.push(wholeToken);
+    }
+  }
+  return uniqueItems(topics).sort((a, b) => a.localeCompare(b, "zh-Hans-CN"));
 }
 
 function getTagTone(tag) {
@@ -287,8 +499,8 @@ function buildBmeSupervisors() {
           title: detail.title ?? "指导教师",
           directions: [],
           groups: new Set(),
-          categories: new Set(),
-          tags: new Set(["硕士生导师", ...(detail.tags ?? [])]),
+          tags: new Set(["硕士生导师", ...(detail.tags ?? []).filter(isAdvisorTag)]),
+          topicTags: new Set(),
           email: detail.email,
           researchSummary: detail.researchSummary,
           admissions: detail.admissions ?? [],
@@ -304,17 +516,17 @@ function buildBmeSupervisors() {
       const teacher = byName.get(name);
       teacher.directions.push(`${area.code} ${area.name}`);
       teacher.groups.add(area.group);
-      teacher.categories.add(area.name);
       if (partTime) teacher.tags.add("兼职导师");
-      (detail.tags ?? []).forEach((tag) => teacher.tags.add(tag));
+      collectTopicTags([area.name, ...(detail.directions ?? [])]).forEach((tag) => teacher.topicTags.add(tag));
     });
   });
 
   return Array.from(byName.values()).map((teacher) => ({
     ...teacher,
     groups: Array.from(teacher.groups),
-    categories: Array.from(teacher.categories),
+    categories: Array.from(teacher.topicTags).sort((a, b) => a.localeCompare(b, "zh-Hans-CN")),
     tags: Array.from(teacher.tags),
+    topicTags: Array.from(teacher.topicTags).sort((a, b) => a.localeCompare(b, "zh-Hans-CN")),
     admissions: teacher.admissions ?? [],
   }));
 }
@@ -327,6 +539,7 @@ function buildMseSupervisors() {
       ...(detail.directions ?? []),
       ...(supplemental.directions ?? []),
     ]);
+    const topicTags = collectTopicTags(directions);
     return {
       id: `mse-${name}`,
       schoolKey: "mse",
@@ -335,8 +548,9 @@ function buildMseSupervisors() {
       title: supplemental.title ?? detail.title ?? "师资人员",
       directions,
       groups: ["医学科学与工程学院师资"],
-      categories: directions,
-      tags: uniqueItems([...(detail.tags ?? []), ...(supplemental.tags ?? []), ...directions]),
+      categories: topicTags,
+      tags: uniqueItems([...(detail.tags ?? []), ...(supplemental.tags ?? [])].filter(isAdvisorTag)),
+      topicTags,
       email: supplemental.email ?? detail.email,
       researchSummary: supplemental.researchSummary,
       admissions: supplemental.admissions ?? [],
@@ -406,7 +620,7 @@ const sourceCards = [
 ];
 
 function getDirectionItems(item) {
-  return item.directions.length ? item.directions : item.categories;
+  return item.topicTags?.length ? item.topicTags : (item.directions.length ? item.directions : item.categories);
 }
 
 function getApprovedNotes(item) {
@@ -770,6 +984,7 @@ function SupervisorCard({ item, expanded, onToggle, pendingCount, onSubmitNote }
   const progress = `${(evidence.count / evidence.total) * 100}%`;
   const advisorStatus = getAdvisorStatus(item);
   const advisorTags = item.tags.filter((tag) => tag === "硕士生导师" || tag === "博士生导师");
+  const summaryTags = [...item.tags, ...(item.topicTags ?? []).slice(0, 3)];
 
   return (
     <article className="supervisor-card">
@@ -783,7 +998,7 @@ function SupervisorCard({ item, expanded, onToggle, pendingCount, onSubmitNote }
             </div>
             <div className="supervisor-card__chips">
               <Chip tone={item.school === "医学科学与工程学院" ? "blue" : "green"}>{item.school}</Chip>
-              {item.tags.map((tag) => <Chip key={tag} tone={getTagTone(tag)}>{tag}</Chip>)}
+              {summaryTags.map((tag) => <Chip key={tag} tone={getTagTone(tag)}>{tag}</Chip>)}
               <Chip tone="slate">{evidence.label}</Chip>
             </div>
           </div>
@@ -1023,6 +1238,7 @@ export default function App() {
           item.name,
           item.school,
           item.title,
+          ...(item.topicTags ?? []),
           ...item.directions,
           ...item.groups,
           ...item.categories,
@@ -1116,7 +1332,7 @@ export default function App() {
                 <div className="input-with-icon">
                   <Search aria-hidden="true" />
                   <input
-                    placeholder="搜索姓名、学院、方向、邮箱或关键词"
+                    placeholder="搜索姓名、学院、规范方向词、邮箱或关键词"
                     value={searchQ}
                     onChange={(event) => setSearchQ(event.target.value)}
                   />
