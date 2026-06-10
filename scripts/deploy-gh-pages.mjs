@@ -1,4 +1,5 @@
 import { spawnSync } from "node:child_process";
+import process from "node:process";
 
 const REPO_BASE = "/my-buaa-app/";
 const RELEASE_PREFIX = "releases";
@@ -12,13 +13,16 @@ function fail(message) {
 function run(command, args, options = {}) {
   const result = spawnSync(command, args, {
     stdio: "inherit",
-    shell: true,
     ...options,
   });
 
   if (result.status !== 0) {
     process.exit(result.status ?? 1);
   }
+}
+
+function getNpxCommand() {
+  return process.platform === "win32" ? "npx.cmd" : "npx";
 }
 
 function normalizeReleaseName(value) {
@@ -44,7 +48,7 @@ const destPath = mode === "stable" ? "." : `${RELEASE_PREFIX}/${releaseId}`;
 const commitMessage = mode === "stable" ? "Deploy stable site" : `Deploy release ${releaseId}`;
 
 console.log(`\nBuilding ${mode === "stable" ? "stable" : `release ${releaseId}`} with base: ${basePath}`);
-run("npx", ["vite", "build"], {
+run(getNpxCommand(), ["vite", "build"], {
   env: {
     ...process.env,
     BUAA_APP_BASE: basePath,
@@ -52,7 +56,7 @@ run("npx", ["vite", "build"], {
 });
 
 console.log(`\nPublishing to gh-pages destination: ${destPath}`);
-run("npx", [
+run(getNpxCommand(), [
   "gh-pages",
   "-d",
   "dist",
