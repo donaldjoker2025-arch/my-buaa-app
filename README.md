@@ -114,8 +114,8 @@ npm run lint
 * `npm run lint`：运行 ESLint
 * `npm run generate:details`：重新抓取并生成 `src/supervisorDetails.js`
 * `npm run audit:directions`：审查方向与导师索引的一致性
-* `npm run deploy:release -- <版本号>`：发布一个带版本号的 GitHub Pages 归档版本
-* `npm run deploy:stable`：更新稳定版线上入口
+* `npm run deploy:release -- <版本号>`：手动发布一个带版本号的 GitHub Pages 归档版本
+* `npm run deploy:stable`：手动更新稳定版线上入口
 
 ## 数据维护约定
 
@@ -143,31 +143,56 @@ npm run generate:details
 
 ## 发布、版本管理与回退
 
-当前发布采用“双轨”方式，避免新版本直接覆盖旧版本：
+当前发布采用“双轨”方式，既保证日常更新自动化，也保留可回退的归档版本：
 
 * 稳定版地址：`https://donaldjoker2025-arch.github.io/my-buaa-app/`
 * 历史归档地址：`https://donaldjoker2025-arch.github.io/my-buaa-app/releases/<版本号>/`
 
+### 自动化发布规则
+
+仓库已配置 GitHub Actions 工作流：
+
+* `push main`：自动构建并更新稳定版站点
+* `push release-* tag`：自动构建并发布一个归档版
+
+也就是说，日常改动只需要：
+
+```bash
+git push origin main
+```
+
+稳定版网页就会自动更新，不需要再手动执行 deploy 脚本。
+
 ### 推荐发布流程
 
-1. 先为本次上线创建 tag
-2. 先发布一个归档版进行线上验收
-3. 验收通过后，再更新稳定版入口
-
-示例：
+如果某一版你希望长期保留归档，推荐这样做：
 
 ```bash
 git tag release-2026-06-10-lab-v1
 git push origin release-2026-06-10-lab-v1
-npm run deploy:release -- 2026-06-10-lab-v1
+```
+
+推送这个 tag 后，GitHub Actions 会自动把这一版发布到：
+
+```text
+https://donaldjoker2025-arch.github.io/my-buaa-app/releases/release-2026-06-10-lab-v1/
+```
+
+### 手动发布作为兜底
+
+如果 GitHub Actions 暂时不可用，仍然可以手动执行：
+
+```bash
 npm run deploy:stable
+npm run deploy:release -- 2026-06-10-lab-v1
 ```
 
 ### 为什么这样做
 
 * `deploy:release` 会把构建产物发布到 `gh-pages` 分支下的 `releases/<版本号>/`
 * `deploy:stable` 只更新稳定版根路径，同时保留历史归档目录
-* 出现问题时，可以切回旧 tag 或旧提交后重新执行 `npm run deploy:stable` 完成回退
+* `main` 仍然只保存源码，网页展示内容通过自动构建同步到 GitHub Pages
+* 出现问题时，可以切回旧 tag 或旧提交后重新 push / deploy 完成回退
 
 ### 回退建议
 
@@ -175,7 +200,7 @@ npm run deploy:stable
 
 1. 定位上一个可用 tag 或提交
 2. 切回对应代码状态
-3. 重新执行 `npm run deploy:stable`
+3. 重新推送到 `main`，或手动执行 `npm run deploy:stable`
 
 这样可以在不删除历史归档的前提下恢复线上稳定版本。
 
