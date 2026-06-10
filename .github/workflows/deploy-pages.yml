@@ -42,8 +42,12 @@ jobs:
 
       - name: Deploy stable site from main
         if: github.ref_type == 'branch'
+        env:
+          GH_PAGES_REPO_URL: https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git
         run: npm run deploy:stable
 
       - name: Deploy archived release from tag
         if: github.ref_type == 'tag'
+        env:
+          GH_PAGES_REPO_URL: https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git
         run: npm run deploy:release -- "${GITHUB_REF_NAME}"

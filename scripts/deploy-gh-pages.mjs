@@ -46,6 +46,7 @@ const releaseId = mode === "release" ? normalizeReleaseName(releaseName) : "";
 const basePath = mode === "stable" ? REPO_BASE : `${REPO_BASE}${RELEASE_PREFIX}/${releaseId}/`;
 const destPath = mode === "stable" ? "." : `${RELEASE_PREFIX}/${releaseId}`;
 const commitMessage = mode === "stable" ? "Deploy stable site" : `Deploy release ${releaseId}`;
+const repoUrl = process.env.GH_PAGES_REPO_URL?.trim();
 
 console.log(`\nBuilding ${mode === "stable" ? "stable" : `release ${releaseId}`} with base: ${basePath}`);
 run(getNpxCommand(), ["vite", "build"], {
@@ -55,8 +56,7 @@ run(getNpxCommand(), ["vite", "build"], {
   },
 });
 
-console.log(`\nPublishing to gh-pages destination: ${destPath}`);
-run(getNpxCommand(), [
+const publishArgs = [
   "gh-pages",
   "-d",
   "dist",
@@ -65,7 +65,14 @@ run(getNpxCommand(), [
   "--add",
   "--message",
   commitMessage,
-]);
+];
+
+if (repoUrl) {
+  publishArgs.push("--repo", repoUrl);
+}
+
+console.log(`\nPublishing to gh-pages destination: ${destPath}`);
+run(getNpxCommand(), publishArgs);
 
 if (mode === "stable") {
   console.log(`\nStable URL: https://donaldjoker2025-arch.github.io${REPO_BASE}`);
