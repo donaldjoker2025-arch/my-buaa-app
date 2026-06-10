@@ -10,8 +10,9 @@
     "audit:directions": "node scripts/audit-supervisor-directions.mjs",
     "lint": "eslint .",
     "preview": "vite preview",
-    "predeploy": "npm run build",
-    "deploy": "gh-pages -d dist"
+    "deploy": "npm run deploy:stable",
+    "deploy:stable": "node scripts/deploy-gh-pages.mjs stable",
+    "deploy:release": "node scripts/deploy-gh-pages.mjs release"
   },
   "dependencies": {
     "lucide-react": "^1.17.0",

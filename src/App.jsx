@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   AlertTriangle,
   ArrowUpRight,
@@ -570,6 +570,37 @@ const categories = [
   "全部",
   ...Array.from(new Set(supervisors.flatMap((item) => item.categories))).sort((a, b) => a.localeCompare(b, "zh-Hans-CN")),
 ];
+const mentorLabSchoolOptions = ["不限学院", ...schools.filter((school) => school !== "全部")];
+const mentorLabTopicStats = Array.from(
+  supervisors.reduce((map, item) => {
+    item.topicTags.forEach((topic) => {
+      const current = map.get(topic) ?? { topic, total: 0, schools: new Set() };
+      current.total += 1;
+      current.schools.add(item.school);
+      map.set(topic, current);
+    });
+    return map;
+  }, new Map()).values(),
+)
+  .map((entry) => ({
+    topic: entry.topic,
+    total: entry.total,
+    schoolCount: entry.schools.size,
+    schools: Array.from(entry.schools),
+  }))
+  .sort((a, b) => b.total - a.total || b.schoolCount - a.schoolCount || a.topic.localeCompare(b.topic, "zh-Hans-CN"));
+const supervisorIds = new Set(supervisors.map((item) => item.id));
+const mentorLabDefaultProfile = {
+  topics: [],
+  school: "不限学院",
+  requireEmail: false,
+  preferAdmissions: false,
+  preferEvidence: false,
+};
+const MENTOR_LAB_PROFILE_KEY = "buaa-mentor-lab-profile";
+const MENTOR_LAB_COMPARE_KEY = "buaa-mentor-lab-compare";
+const MENTOR_LAB_SHORTLIST_KEY = "buaa-mentor-lab-shortlist";
+const matchTierRank = { high: 3, medium: 2, low: 1 };
 
 const sourceCards = [
   {
@@ -631,19 +662,28 @@ function getPendingKey(item) {
   return `${item.schoolKey}:${item.name}`;
 }
 
-function safeReadPendingSubmissions() {
-  if (typeof window === "undefined") return [];
+function safeReadLocalJson(key, fallback) {
+  if (typeof window === "undefined") return fallback;
   try {
-    const parsed = JSON.parse(window.localStorage.getItem("buaa-pending-community-notes") ?? "[]");
-    return Array.isArray(parsed) ? parsed : [];
+    const parsed = JSON.parse(window.localStorage.getItem(key) ?? "null");
+    return parsed ?? fallback;
   } catch {
-    return [];
+    return fallback;
   }
 }
 
-function writePendingSubmissions(items) {
+function writeLocalJson(key, value) {
   if (typeof window === "undefined") return;
-  window.localStorage.setItem("buaa-pending-community-notes", JSON.stringify(items));
+  window.localStorage.setItem(key, JSON.stringify(value));
+}
+
+function safeReadPendingSubmissions() {
+  const parsed = safeReadLocalJson("buaa-pending-community-notes", []);
+  return Array.isArray(parsed) ? parsed : [];
+}
+
+function writePendingSubmissions(items) {
+  writeLocalJson("buaa-pending-community-notes", items);
 }
 
 async function copyText(value) {
@@ -697,6 +737,150 @@ function getEvidenceSummary(item) {
   const count = evidence.filter((entry) => entry.active).length;
   const label = count >= 6 ? "信息较完整" : count >= 4 ? "可重点核验" : "需补充核验";
   return { count, total: evidence.length, label, evidence };
+}
+
+function getMatchTierLabel(tier) {
+  if (tier === "high") return "高度相关";
+  if (tier === "medium") return "可继续看";
+  return "信息待补";
+}
+
+function getMatchTierTone(tier) {
+  if (tier === "high") return "green";
+  if (tier === "medium") return "blue";
+  return "amber";
+}
+
+function getActionBucketLabel(bucket) {
+  if (bucket === "contact") return "可立即联系";
+  if (bucket === "review") return "建议先看主页";
+  return "建议先补证据";
+}
+
+function getActionBucketTone(bucket) {
+  if (bucket === "contact") return "green";
+  if (bucket === "review") return "blue";
+  return "amber";
+}
+
+function getActionBucketHint(bucket) {
+  if (bucket === "contact") return "方向已命中且有公开邮箱，可以先读主页摘要后再礼貌联系。";
+  if (bucket === "review") return "已有兴趣命中，但更适合先核对主页和招生通知，再决定是否联系。";
+  return "先观察公开资料完整度，必要时补查主页、论文和课题组动态。";
+}
+
+function normalizeMentorLabProfile(raw) {
+  return {
+    topics: Array.isArray(raw?.topics)
+      ? uniqueItems(raw.topics.filter((topic) => categories.includes(topic))).slice(0, 5)
+      : [],
+    school: mentorLabSchoolOptions.includes(raw?.school) ? raw.school : mentorLabDefaultProfile.school,
+    requireEmail: Boolean(raw?.requireEmail),
+    preferAdmissions: Boolean(raw?.preferAdmissions),
+    preferEvidence: Boolean(raw?.preferEvidence),
+  };
+}
+
+function safeReadMentorLabProfile() {
+  return normalizeMentorLabProfile(safeReadLocalJson(MENTOR_LAB_PROFILE_KEY, mentorLabDefaultProfile));
+}
+
+function safeReadMentorLabIds(key) {
+  const parsed = safeReadLocalJson(key, []);
+  return Array.isArray(parsed) ? uniqueItems(parsed.filter((id) => supervisorIds.has(id))) : [];
+}
+
+function getMatchDetails(item, selectedTopics) {
+  const directions = getDirectionItems(item);
+  const topicHits = selectedTopics.filter((topic) => item.topicTags.includes(topic));
+  const officialDirectionHits = selectedTopics.filter(
+    (topic) => !topicHits.includes(topic) && directions.some((direction) => direction.includes(topic)),
+  );
+
+  return {
+    topicHits,
+    officialDirectionHits,
+    interestHits: uniqueItems([...topicHits, ...officialDirectionHits]),
+  };
+}
+
+function getMentorLabMatchTier(item, matchDetails, evidenceSummary, profile) {
+  const topicHitCount = matchDetails.topicHits.length;
+  const interestHitCount = matchDetails.interestHits.length;
+  const hasAdmissions = Boolean(item.admissions?.length);
+
+  if (
+    topicHitCount >= 3
+    || (topicHitCount >= 2 && (item.email || hasAdmissions || evidenceSummary.count >= 5))
+    || (profile.preferAdmissions && topicHitCount >= 1 && hasAdmissions)
+    || (profile.preferEvidence && topicHitCount >= 1 && evidenceSummary.count >= 6)
+  ) {
+    return "high";
+  }
+
+  if (interestHitCount >= 1) return "medium";
+  return "low";
+}
+
+function buildMentorLabEntry(item, profile) {
+  const evidence = getEvidenceSummary(item);
+  const matchDetails = getMatchDetails(item, profile.topics);
+  const matchTier = getMentorLabMatchTier(item, matchDetails, evidence, profile);
+  const matchReasons = [];
+
+  if (matchDetails.topicHits.length > 0) {
+    matchReasons.push(`命中 ${matchDetails.topicHits.length} 个兴趣标签`);
+  }
+  if (matchDetails.officialDirectionHits.length > 0) {
+    matchReasons.push(`官方方向出现 ${matchDetails.officialDirectionHits.join("、")}`);
+  }
+  if (item.email) {
+    matchReasons.push("有公开邮箱");
+  }
+  if (item.admissions?.length) {
+    matchReasons.push("有 2026 招生线索");
+  }
+  if (evidence.count >= 6) {
+    matchReasons.push("资料较完整");
+  } else if (evidence.count >= 4) {
+    matchReasons.push("可继续核验");
+  }
+  if ((item.profileUrl || item.teacherHomeUrl) && matchReasons.length < 4) {
+    matchReasons.push("有主页入口");
+  }
+
+  const hasInterestHit = matchDetails.interestHits.length > 0;
+  const hasProfileLead = Boolean(item.profileUrl || item.teacherHomeUrl || item.admissions?.length);
+  let actionBucket = "watch";
+  if (hasInterestHit && item.email) {
+    actionBucket = "contact";
+  } else if (hasInterestHit && hasProfileLead) {
+    actionBucket = "review";
+  }
+
+  return {
+    item,
+    evidence,
+    matchDetails,
+    matchReasons: uniqueItems(matchReasons).slice(0, 4),
+    matchTier,
+    actionBucket,
+  };
+}
+
+function compareMentorLabEntries(a, b, profile) {
+  return (
+    matchTierRank[b.matchTier] - matchTierRank[a.matchTier]
+    || b.matchDetails.topicHits.length - a.matchDetails.topicHits.length
+    || b.matchDetails.officialDirectionHits.length - a.matchDetails.officialDirectionHits.length
+    || Number(Boolean(b.item.email)) - Number(Boolean(a.item.email))
+    || (profile.preferAdmissions ? Number(Boolean(b.item.admissions?.length)) - Number(Boolean(a.item.admissions?.length)) : 0)
+    || (profile.preferEvidence ? b.evidence.count - a.evidence.count : 0)
+    || Number(Boolean(b.item.admissions?.length)) - Number(Boolean(a.item.admissions?.length))
+    || b.evidence.count - a.evidence.count
+    || a.item.school.localeCompare(b.item.school, "zh-Hans-CN")
+    || a.item.name.localeCompare(b.item.name, "zh-Hans-CN")
+  );
 }
 
 function getStudentClues(item) {
@@ -1179,6 +1363,408 @@ function DirectionCard({ area }) {
   );
 }
 
+function MentorLabResultCard({
+  entry,
+  isCompared,
+  isShortlisted,
+  onToggleCompare,
+  onToggleShortlist,
+  onOpenMentor,
+}) {
+  const directions = getDirectionItems(entry.item);
+
+  return (
+    <article className="mentor-lab-card">
+      <div className="mentor-lab-card__header">
+        <div>
+          <div className="mentor-lab-card__headline">
+            <h3>{entry.item.name}</h3>
+            <span>{entry.item.title}</span>
+          </div>
+          <div className="mentor-lab-card__chips">
+            <Chip tone={entry.item.school === "医学科学与工程学院" ? "blue" : "green"}>{entry.item.school}</Chip>
+            <Chip tone={getMatchTierTone(entry.matchTier)}>{getMatchTierLabel(entry.matchTier)}</Chip>
+            <Chip tone="slate">{entry.evidence.label}</Chip>
+            {isShortlisted && <Chip tone="amber">已加入待联系</Chip>}
+          </div>
+        </div>
+        <div className="mentor-lab-card__stats">
+          <div>
+            <strong>{entry.matchDetails.interestHits.length}</strong>
+            <span>兴趣命中</span>
+          </div>
+          <div>
+            <strong>{directions.length}</strong>
+            <span>公开方向</span>
+          </div>
+          <div>
+            <strong>{entry.item.email ? "有" : "待查"}</strong>
+            <span>邮箱</span>
+          </div>
+        </div>
+      </div>
+
+      <div className="mentor-lab-card__body">
+        <div>
+          <span className="detail-label">为什么会出现</span>
+          <div className="chip-row">
+            {entry.matchReasons.map((reason) => <Chip key={reason}>{reason}</Chip>)}
+          </div>
+        </div>
+        <div>
+          <span className="detail-label">命中兴趣</span>
+          <div className="chip-row">
+            {entry.matchDetails.interestHits.length > 0
+              ? entry.matchDetails.interestHits.map((topic) => <Chip key={topic} tone="blue">{topic}</Chip>)
+              : <p className="detail-copy">当前兴趣画像下暂无直接命中，适合留作补充观察。</p>}
+          </div>
+        </div>
+        <div>
+          <span className="detail-label">方向线索</span>
+          <div className="chip-row">
+            {directions.slice(0, 4).map((direction) => <Chip key={direction}>{direction}</Chip>)}
+            {directions.length > 4 && <Chip tone="outline">+{directions.length - 4} 个方向</Chip>}
+          </div>
+        </div>
+      </div>
+
+      <div className="mentor-lab-card__actions">
+        <button type="button" className="link-button" onClick={() => onToggleCompare(entry.item.id)}>
+          {isCompared ? "移出对比台" : "加入对比台"}
+        </button>
+        <button type="button" className="link-button" onClick={() => onToggleShortlist(entry.item.id)}>
+          {isShortlisted ? "移出待联系" : "加入待联系"}
+        </button>
+        <button type="button" className="link-button" onClick={() => onOpenMentor(entry.item)}>
+          在索引中查看
+        </button>
+        {entry.item.email && (
+          <a className="link-button link-button--strong" href={`mailto:${entry.item.email}`}>
+            <Mail aria-hidden="true" />
+            联系邮箱
+          </a>
+        )}
+      </div>
+    </article>
+  );
+}
+
+function MentorLabComparePanel({ items, diffOnly, onToggleDiff, onRemove }) {
+  const rows = [
+    { label: "学院", key: "school", getValue: (entry) => entry.item.school },
+    { label: "职称", key: "title", getValue: (entry) => entry.item.title ?? "待查" },
+    { label: "硕/博导标签", key: "advisor", getValue: (entry) => entry.item.tags.filter(isAdvisorTag).join("、") || "待查" },
+    { label: "公开方向数量", key: "directionCount", getValue: (entry) => String(getDirectionItems(entry.item).length) },
+    { label: "兴趣标签重合", key: "interestHits", getValue: (entry) => entry.matchDetails.interestHits.join("、") || "暂无直接命中" },
+    { label: "公开邮箱", key: "email", getValue: (entry) => entry.item.email || "待查" },
+    { label: "招生线索", key: "admissions", getValue: (entry) => (entry.item.admissions?.length ? `${entry.item.admissions.length} 条` : "暂无") },
+    { label: "资料完整度", key: "evidence", getValue: (entry) => `${entry.evidence.label} (${entry.evidence.count}/${entry.evidence.total})` },
+    { label: "主页入口", key: "profile", getValue: (entry) => entry.item.profileUrl || entry.item.teacherHomeUrl || entry.item.profileSourceUrl || "待查" },
+  ];
+
+  const visibleRows = diffOnly
+    ? rows.filter((row) => new Set(items.map((entry) => row.getValue(entry))).size > 1)
+    : rows;
+
+  return (
+    <div className="mentor-lab-panel">
+      <div className="mentor-lab-panel__header">
+        <div>
+          <span className="eyebrow">导师对比台</span>
+          <h3>最多同时比较 4 位导师</h3>
+        </div>
+        <button type="button" className={diffOnly ? "toggle-button toggle-button--active" : "toggle-button"} onClick={onToggleDiff}>
+          仅显示差异项
+        </button>
+      </div>
+
+      {items.length === 0 ? (
+        <p className="detail-copy">从匹配候选卡中加入导师后，这里会展示学院、标签、邮箱和资料完整度对比。</p>
+      ) : (
+        <div className="compare-board">
+          <div className="compare-board__cards">
+            {items.map((entry) => (
+              <article key={entry.item.id} className="compare-card">
+                <div>
+                  <h4>{entry.item.name}</h4>
+                  <p>{entry.item.title}</p>
+                </div>
+                <div className="chip-row">
+                  <Chip tone={getMatchTierTone(entry.matchTier)}>{getMatchTierLabel(entry.matchTier)}</Chip>
+                  <Chip tone={getActionBucketTone(entry.actionBucket)}>{getActionBucketLabel(entry.actionBucket)}</Chip>
+                </div>
+                <button type="button" className="link-button" onClick={() => onRemove(entry.item.id)}>
+                  移出
+                </button>
+              </article>
+            ))}
+          </div>
+
+          <div className="compare-table">
+            {visibleRows.map((row) => (
+              <div key={row.key} className="compare-row">
+                <span className="compare-row__label">{row.label}</span>
+                <div className="compare-row__values">
+                  {items.map((entry) => {
+                    const value = row.getValue(entry);
+                    const isUrl = row.key === "profile" && /^https?:\/\//.test(value);
+                    return (
+                      <div key={`${row.key}-${entry.item.id}`} className="compare-row__value">
+                        {isUrl ? (
+                          <a href={value} target="_blank" rel="noreferrer">
+                            {getProfileLinkLabel(value)}
+                            <ArrowUpRight aria-hidden="true" />
+                          </a>
+                        ) : (
+                          <span>{value}</span>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
+            {visibleRows.length === 0 && <p className="detail-copy">当前几位导师在主要指标上没有显著差异。</p>}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function MentorLabSection({
+  profile,
+  results,
+  compareItems,
+  shortlistItems,
+  compareDiffOnly,
+  message,
+  onToggleTopic,
+  onUpdateProfile,
+  onResetProfile,
+  onToggleCompare,
+  onToggleShortlist,
+  onOpenMentor,
+  onToggleCompareDiff,
+}) {
+  const groupedResults = {
+    high: results.filter((entry) => entry.matchTier === "high"),
+    medium: results.filter((entry) => entry.matchTier === "medium"),
+    low: results.filter((entry) => entry.matchTier === "low"),
+  };
+  const actionGroups = {
+    contact: results.filter((entry) => entry.actionBucket === "contact").slice(0, 6),
+    review: results.filter((entry) => entry.actionBucket === "review").slice(0, 6),
+    watch: results.filter((entry) => entry.actionBucket === "watch").slice(0, 6),
+  };
+  const selectedTopicSet = new Set(profile.topics);
+  const highlightedHeatTopics = mentorLabTopicStats.slice(0, 24);
+  const resultSections = [
+    { key: "high", title: "高度相关", description: "方向命中较多，且资料线索相对完整。", items: groupedResults.high },
+    { key: "medium", title: "可继续看", description: "已有兴趣重合，适合先进主页继续核验。", items: groupedResults.medium },
+    { key: "low", title: "信息待补", description: "暂未命中明显兴趣点，或公开资料还不够完整。", items: groupedResults.low },
+  ];
+
+  return (
+    <section className="content-section">
+      <SectionTitle eyebrow="择导实验室" title="把公开数据变成可操作的选择工具">
+        先选兴趣，再看匹配理由、横向对比和下一步动作，不做主观榜单，只帮你缩小需要认真核验的范围。
+      </SectionTitle>
+
+      <div className="mentor-lab-layout">
+        <div className="mentor-lab-panel mentor-lab-panel--profile">
+          <div className="mentor-lab-panel__header">
+            <div>
+              <span className="eyebrow">兴趣画像</span>
+              <h3>先圈定 3-5 个研究兴趣</h3>
+            </div>
+            <button type="button" className="link-button" onClick={onResetProfile}>重置画像</button>
+          </div>
+          <p className="detail-copy">
+            当前已选 {profile.topics.length} 个兴趣标签。建议控制在 3-5 个，能更快看出哪些导师值得优先核验。
+          </p>
+          <div className="mentor-lab-profile__controls">
+            <label className="field">
+              <span>学院偏好</span>
+              <select value={profile.school} onChange={(event) => onUpdateProfile("school", event.target.value)}>
+                {mentorLabSchoolOptions.map((school) => <option key={school}>{school}</option>)}
+              </select>
+            </label>
+            <div className="mentor-lab-toggle-group">
+              <button
+                type="button"
+                className={profile.requireEmail ? "toggle-button toggle-button--active" : "toggle-button"}
+                onClick={() => onUpdateProfile("requireEmail", !profile.requireEmail)}
+              >
+                只看有公开邮箱
+              </button>
+              <button
+                type="button"
+                className={profile.preferAdmissions ? "toggle-button toggle-button--active" : "toggle-button"}
+                onClick={() => onUpdateProfile("preferAdmissions", !profile.preferAdmissions)}
+              >
+                优先有招生线索
+              </button>
+              <button
+                type="button"
+                className={profile.preferEvidence ? "toggle-button toggle-button--active" : "toggle-button"}
+                onClick={() => onUpdateProfile("preferEvidence", !profile.preferEvidence)}
+              >
+                优先资料完整
+              </button>
+            </div>
+          </div>
+          <div className="mentor-lab-selected">
+            {profile.topics.length > 0
+              ? profile.topics.map((topic) => (
+                <button key={topic} type="button" className="topic-chip topic-chip--active" onClick={() => onToggleTopic(topic)}>
+                  {topic}
+                </button>
+              ))
+              : <p className="detail-copy">还没有选择兴趣标签，可以先从下方热区图里点几个方向开始。</p>}
+          </div>
+        </div>
+
+        <div className="mentor-lab-panel">
+          <div className="mentor-lab-panel__header">
+            <div>
+              <span className="eyebrow">方向热区图</span>
+              <h3>从现有导师覆盖里反向探索</h3>
+            </div>
+          </div>
+          <p className="detail-copy">颜色越深，代表覆盖导师越多；带“跨院”标记的方向适合拿来观察交叉机会。</p>
+          <div className="topic-heatmap">
+            {highlightedHeatTopics.map((entry) => (
+              <button
+                key={entry.topic}
+                type="button"
+                className={selectedTopicSet.has(entry.topic) ? "topic-heat topic-heat--active" : "topic-heat"}
+                style={{ "--heat-strength": `${Math.min(0.9, 0.28 + entry.total / 28)}` }}
+                onClick={() => onToggleTopic(entry.topic)}
+              >
+                <strong>{entry.topic}</strong>
+                <span>{entry.total} 位导师</span>
+                {entry.schoolCount > 1 && <em>跨院</em>}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {message && (
+        <div className="notice notice--compact">
+          <AlertTriangle aria-hidden="true" />
+          <div>
+            <p>实验室提示</p>
+            <span>{message}</span>
+          </div>
+        </div>
+      )}
+
+      <MentorLabComparePanel
+        items={compareItems}
+        diffOnly={compareDiffOnly}
+        onToggleDiff={onToggleCompareDiff}
+        onRemove={onToggleCompare}
+      />
+
+      <div className="mentor-lab-panel">
+        <div className="mentor-lab-panel__header">
+          <div>
+            <span className="eyebrow">联系行动板</span>
+            <h3>把候选人分成下一步动作</h3>
+          </div>
+        </div>
+        {profile.topics.length === 0 ? (
+          <p className="detail-copy">先完成兴趣画像，再看“可立即联系 / 建议先看主页 / 建议先补证据”三组动作会更准确。</p>
+        ) : (
+          <div className="action-board">
+            {Object.entries(actionGroups).map(([bucket, items]) => (
+              <div key={bucket} className="action-board__group">
+                <div className="action-board__header">
+                  <Chip tone={getActionBucketTone(bucket)}>{getActionBucketLabel(bucket)}</Chip>
+                  <span>{items.length} 位优先显示</span>
+                </div>
+                <p>{getActionBucketHint(bucket)}</p>
+                {items.length > 0 ? (
+                  <div className="action-board__list">
+                    {items.map((entry) => (
+                      <button key={entry.item.id} type="button" className="action-board__item" onClick={() => onOpenMentor(entry.item)}>
+                        <strong>{entry.item.name}</strong>
+                        <span>{entry.matchReasons[0] ?? "查看导师详情"}</span>
+                      </button>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="detail-copy">当前画像下暂时没有落入这一组的导师。</p>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <div className="mentor-lab-panel">
+        <div className="mentor-lab-panel__header">
+          <div>
+            <span className="eyebrow">待联系清单</span>
+            <h3>本机收藏，方便下一次继续看</h3>
+          </div>
+        </div>
+        {shortlistItems.length > 0 ? (
+          <div className="mentor-lab-shortlist">
+            {shortlistItems.map((entry) => (
+              <button key={entry.item.id} type="button" className="shortlist-pill" onClick={() => onOpenMentor(entry.item)}>
+                {entry.item.name}
+              </button>
+            ))}
+          </div>
+        ) : (
+          <p className="detail-copy">还没有加入待联系导师。可以在候选卡里先收藏，再回到原索引逐条核验。</p>
+        )}
+      </div>
+
+      {profile.topics.length === 0 ? (
+        <div className="mentor-lab-empty">
+          <h3>先选择兴趣方向</h3>
+          <p>从热区图点几个你真正想申请的方向词，再看“高度相关 / 可继续看 / 信息待补”三档结果会更有意义。</p>
+        </div>
+      ) : (
+        <div className="mentor-lab-results">
+          {resultSections.map((section) => (
+            <div key={section.key} className="mentor-lab-result-group">
+              <div className="mentor-lab-result-group__header">
+                <div>
+                  <h3>{section.title}</h3>
+                  <p>{section.description}</p>
+                </div>
+                <Chip tone={getMatchTierTone(section.key)}>{section.items.length} 位</Chip>
+              </div>
+              {section.items.length > 0 ? (
+                <div className="mentor-lab-card-list">
+                  {section.items.map((entry) => (
+                    <MentorLabResultCard
+                      key={entry.item.id}
+                      entry={entry}
+                      isCompared={compareItems.some((compareEntry) => compareEntry.item.id === entry.item.id)}
+                      isShortlisted={shortlistItems.some((shortlistEntry) => shortlistEntry.item.id === entry.item.id)}
+                      onToggleCompare={onToggleCompare}
+                      onToggleShortlist={onToggleShortlist}
+                      onOpenMentor={onOpenMentor}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <p className="detail-copy">当前画像下这一档暂时没有导师。</p>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}
+
 export default function App() {
   const [schoolFilter, setSchoolFilter] = useState("全部");
   const [catFilter, setCatFilter] = useState("全部");
@@ -1186,6 +1772,23 @@ export default function App() {
   const [expanded, setExpanded] = useState(null);
   const [activeTab, setActiveTab] = useState("database");
   const [pendingSubmissions, setPendingSubmissions] = useState(() => safeReadPendingSubmissions());
+  const [mentorLabProfile, setMentorLabProfile] = useState(() => safeReadMentorLabProfile());
+  const [mentorCompareList, setMentorCompareList] = useState(() => safeReadMentorLabIds(MENTOR_LAB_COMPARE_KEY));
+  const [mentorShortlist, setMentorShortlist] = useState(() => safeReadMentorLabIds(MENTOR_LAB_SHORTLIST_KEY));
+  const [compareDiffOnly, setCompareDiffOnly] = useState(false);
+  const [mentorLabMessage, setMentorLabMessage] = useState("");
+
+  useEffect(() => {
+    writeLocalJson(MENTOR_LAB_PROFILE_KEY, mentorLabProfile);
+  }, [mentorLabProfile]);
+
+  useEffect(() => {
+    writeLocalJson(MENTOR_LAB_COMPARE_KEY, mentorCompareList);
+  }, [mentorCompareList]);
+
+  useEffect(() => {
+    writeLocalJson(MENTOR_LAB_SHORTLIST_KEY, mentorShortlist);
+  }, [mentorShortlist]);
 
   function handleSubmitNote(item, form) {
     const submission = {
@@ -1212,6 +1815,55 @@ export default function App() {
   function handleClearPending() {
     setPendingSubmissions([]);
     writePendingSubmissions([]);
+  }
+
+  function handleMentorLabProfileChange(field, value) {
+    setMentorLabProfile((current) => normalizeMentorLabProfile({ ...current, [field]: value }));
+  }
+
+  function handleToggleMentorTopic(topic) {
+    setMentorLabMessage("");
+    setMentorLabProfile((current) => {
+      if (current.topics.includes(topic)) {
+        return { ...current, topics: current.topics.filter((item) => item !== topic) };
+      }
+      if (current.topics.length >= 5) {
+        setMentorLabMessage("兴趣画像建议最多保留 5 个标签，先删掉一个再继续添加会更清晰。");
+        return current;
+      }
+      return { ...current, topics: [...current.topics, topic] };
+    });
+  }
+
+  function handleResetMentorLabProfile() {
+    setMentorLabMessage("");
+    setMentorLabProfile(mentorLabDefaultProfile);
+  }
+
+  function handleToggleCompare(mentorId) {
+    setMentorLabMessage("");
+    setMentorCompareList((current) => {
+      if (current.includes(mentorId)) {
+        return current.filter((id) => id !== mentorId);
+      }
+      if (current.length >= 4) {
+        setMentorLabMessage("对比台最多同时保留 4 位导师，先移出一位再继续添加。");
+        return current;
+      }
+      return [...current, mentorId];
+    });
+  }
+
+  function handleToggleShortlist(mentorId) {
+    setMentorShortlist((current) => (current.includes(mentorId) ? current.filter((id) => id !== mentorId) : [...current, mentorId]));
+  }
+
+  function handleOpenMentorFromLab(item) {
+    setActiveTab("database");
+    setSchoolFilter(item.school);
+    setCatFilter("全部");
+    setSearchQ(item.name);
+    setExpanded(item.id);
   }
 
   const stats = useMemo(() => {
@@ -1255,8 +1907,32 @@ export default function App() {
       .sort((a, b) => a.school.localeCompare(b.school, "zh-Hans-CN") || a.name.localeCompare(b.name, "zh-Hans-CN"));
   }, [catFilter, schoolFilter, searchQ]);
 
+  const mentorLabResults = useMemo(() => {
+    return supervisors
+      .filter((item) => mentorLabProfile.school === "不限学院" || item.school === mentorLabProfile.school)
+      .filter((item) => !mentorLabProfile.requireEmail || Boolean(item.email))
+      .map((item) => buildMentorLabEntry(item, mentorLabProfile))
+      .sort((a, b) => compareMentorLabEntries(a, b, mentorLabProfile));
+  }, [mentorLabProfile]);
+
+  const mentorCompareItems = useMemo(() => {
+    return mentorCompareList
+      .map((id) => supervisors.find((item) => item.id === id))
+      .filter(Boolean)
+      .map((item) => buildMentorLabEntry(item, mentorLabProfile));
+  }, [mentorCompareList, mentorLabProfile]);
+
+  const mentorShortlistItems = useMemo(() => {
+    return mentorShortlist
+      .map((id) => supervisors.find((item) => item.id === id))
+      .filter(Boolean)
+      .map((item) => buildMentorLabEntry(item, mentorLabProfile))
+      .sort((a, b) => compareMentorLabEntries(a, b, mentorLabProfile));
+  }, [mentorLabProfile, mentorShortlist]);
+
   const tabs = [
     { id: "database", label: "导师索引", icon: Search },
+    { id: "mentor-lab", label: "择导实验室", icon: BarChart3 },
     { id: "directions", label: "培养方向", icon: GraduationCap },
     { id: "sources", label: "来源与建议", icon: LinkIcon },
   ];
@@ -1366,6 +2042,24 @@ export default function App() {
             ))}
           </div>
         </section>
+      )}
+
+      {activeTab === "mentor-lab" && (
+        <MentorLabSection
+          profile={mentorLabProfile}
+          results={mentorLabResults}
+          compareItems={mentorCompareItems}
+          shortlistItems={mentorShortlistItems}
+          compareDiffOnly={compareDiffOnly}
+          message={mentorLabMessage}
+          onToggleTopic={handleToggleMentorTopic}
+          onUpdateProfile={handleMentorLabProfileChange}
+          onResetProfile={handleResetMentorLabProfile}
+          onToggleCompare={handleToggleCompare}
+          onToggleShortlist={handleToggleShortlist}
+          onOpenMentor={handleOpenMentorFromLab}
+          onToggleCompareDiff={() => setCompareDiffOnly((value) => !value)}
+        />
       )}
 
       {activeTab === "directions" && (
