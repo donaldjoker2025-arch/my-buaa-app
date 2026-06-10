@@ -70,6 +70,7 @@
 ├─ scripts/
 │  ├─ generate-supervisor-details.mjs
 │  ├─ audit-supervisor-directions.mjs
+│  ├─ supervisor-manual-overrides.js
 │  └─ deploy-gh-pages.mjs
 ├─ public/
 └─ vite.config.js
@@ -135,6 +136,8 @@ npm run generate:details
 * 科研摘要
 * 招生线索
 
+对于无法安全自动匹配到教师主页的姓名，可在 `scripts/supervisor-manual-overrides.js` 中补充最小必要的公开来源字段，例如 `officialUrl`、`teacherHomeUrl`、`title`、`email` 与导师资格标签。
+
 ### 社区补充审核
 
 * 前端用户提交的信息只会保存在浏览器本地，不会自动进入仓库
@@ -168,14 +171,14 @@ git push origin main
 如果某一版你希望长期保留归档，推荐这样做：
 
 ```bash
-git tag release-2026-06-10-lab-v1
-git push origin release-2026-06-10-lab-v1
+git tag release-v0.1.0
+git push origin release-v0.1.0
 ```
 
 推送这个 tag 后，GitHub Actions 会自动把这一版发布到：
 
 ```text
-https://donaldjoker2025-arch.github.io/my-buaa-app/releases/release-2026-06-10-lab-v1/
+https://donaldjoker2025-arch.github.io/my-buaa-app/releases/release-v0.1.0/
 ```
 
 ### 手动发布作为兜底

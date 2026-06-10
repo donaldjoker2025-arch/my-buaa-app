@@ -2,6 +2,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import { createHash } from "node:crypto";
 import * as cheerio from "cheerio";
+import { supervisorManualOverrides } from "./supervisor-manual-overrides.js";
 
 const ROOT = process.cwd();
 const CACHE_DIR = path.join(ROOT, ".codex-cache", "supervisors");
@@ -11,9 +12,10 @@ const INDEX_TIMEOUT_MS = 60000;
 const PROFILE_TIMEOUT_MS = 2500;
 const FETCH_PROFILE_DETAILS = process.env.BUAA_FETCH_PROFILES === "1";
 const REFRESH_CACHE = process.env.BUAA_REFRESH_CACHE === "1";
-const MAX_SHI_SEARCH_PAGES = 12;
+const MAX_SHI_SEARCH_PAGES = 30;
 const PROFILE_BATCH_SIZE = 8;
 const TSITES_ENCRYPT_PATH = "/system/resource/tsites/tsitesencrypt.jsp";
+const ALLOWED_TAGS = new Set(["硕士生导师", "博士生导师", "兼职导师"]);
 
 const URLS = {
   bmeTeachers: "https://bme.buaa.edu.cn/teachers.aspx?catID=7",
@@ -31,6 +33,10 @@ const BME_BASE = "https://bme.buaa.edu.cn/";
 const MSE_BASE = "https://ygy.buaa.edu.cn/szdw1/szryxx.htm";
 const SCHOOL_HOST_RE = /(?:^|\.)?(?:bme|ygy)\.buaa\.edu\.cn$/i;
 const SHI_HOST_RE = /(?:^|\.)?shi\.buaa\.edu\.cn$/i;
+const PROFILE_NOISE_RE = /var\s+codeInfo|window\.location|jQuery\(|qrcode|二维码|扫描手机二维码|欢迎您的访问|您是第|开通时间|最后更新时间|登录\|\s*English\s*\|\s*手机版|_tsites_com_view_mode_type_|ImageScale|点击次数|发布时间|友情链接|Site Map|版权所有|Copyright/i;
+const DIRECTION_NARRATIVE_RE = /我的研究方向|目前对于|有望|可以用来|最终将有望|领衔研制|完成了|长期从事|致力于|广泛运用|尤其关注|服务.*战略需求|研究并不透彻|欢迎/;
+const PROFILE_LIST_PAGE_RE = /(?:teachers|studentInfo|zhaopinHr)\.aspx|xyjslb\.jsp|\/szdw1\/szryxx(?:\/\d+\.htm)?$/i;
+const PROFILE_DETAIL_PAGE_RE = /teacherInfo\.aspx|\/info\/\d+\/\d+\.htm$/i;
 const SUMMARY_FORBIDDEN_RE = /教育背景|教育经历|学习经历|工作经历|社会兼职|学术兼职|联系方式|电子邮箱|开授课程|同专业|获得.*学位|博士学位|大学本科|委员会|优秀教师奖|优秀青年|新世纪优秀人才|入选.*人才|支持计划|获奖|奖励|代表性论文|近五年代表性论著|获授权|高被引|国家自然科学基金|国家重点研发|科研项目|项目负责人|基金|项目|课题|发表|期刊|会议|审稿人|SCI|ESI|IEEE/i;
 const DIRECTION_FORBIDDEN_RE = /师资索引|教师索引|人员列表|个人页面|页面入口|教育背景|教育经历|学习经历|工作经历|代表性|科研项目|论文|联系方式|电子邮箱|招生信息|个人简介|简介】|学术荣誉|荣誉与奖励|国家自然科学基金|国家重点研发|基金|项目|课题|面上项目|青年项|优秀青年|新世纪优秀人才|入选|支持计划|获授权|获奖|奖励|院士|获得.*学位|^\d{4}年|至今|社会兼职|学术兼职|同专业|开授课程|委员会|大学|相关成果|发表|期刊|会议|高被引|被引|审稿人|实验室|Nature|Cancer Research|Medical Image Analysis|NeuroImage|Human Brain Mapping|IEEE|MICCAI|CVPR|IPMI/i;
 const SECTION_LABEL_RE = /^(?:【)?(研究领域与方向|研究方向简介|研究方向|研究领域|主要研究方向|主要研究领域|研究兴趣|个人简介)(?:】)?[:：]?$/;
@@ -47,8 +53,22 @@ function cleanName(value) {
   return String(value ?? "").replace(/\s|\u00a0/g, "").replace(/★/g, "");
 }
 
-function cleanText(value) {
+function stripProfileNoise(value) {
   return String(value ?? "")
+    .replace(/var\s+codeInfo[\s\S]*$/i, " ")
+    .replace(/jQuery\(function\(\)\{[\s\S]*$/i, " ")
+    .replace(/var\s+_tsites_com_view_mode_type_[\s\S]*$/i, " ")
+    .replace(/ImageScale\([^\)]*\)[\s\S]*$/i, " ")
+    .replace(/扫描手机二维码[\s\S]*$/i, " ")
+    .replace(/登录\|\s*English\s*\|\s*手机版[\s\S]*$/i, " ")
+    .replace(/(?:点击次数|发布时间)[:：]?[^\n\r]*$/gim, " ")
+    .replace(/\/\/[^\n\r]*/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function cleanText(value) {
+  return stripProfileNoise(String(value ?? ""))
     .replace(/\u00a0/g, " ")
     .replace(/[ \t\r\n]+/g, " ")
     .replace(/ ?([，。；：、]) ?/g, "$1")
@@ -56,7 +76,7 @@ function cleanText(value) {
 }
 
 function cleanSectionText(value) {
-  return String(value ?? "")
+  return stripProfileNoise(String(value ?? ""))
     .replace(/\u00a0/g, " ")
     .replace(/\r/g, "\n")
     .replace(/[ \t]+/g, " ")
@@ -67,8 +87,10 @@ function cleanSectionText(value) {
 
 function getStructuredBodyText($) {
   const blocks = [];
+  $("script,style,noscript").remove();
   $("body").find("h1,h2,h3,h4,h5,h6,p,li").each((_, el) => {
     const text = cleanText($(el).text());
+    if (!text || PROFILE_NOISE_RE.test(text)) return;
     if (text) blocks.push(text);
   });
   return blocks.length ? blocks.join("\n") : $("body").text();
@@ -97,6 +119,22 @@ function isShiTeacherHome(url) {
 
 function isSchoolOfficialUrl(url) {
   return SCHOOL_HOST_RE.test(getUrlHost(url));
+}
+
+function isLikelyProfileUrl(url) {
+  if (!url) return false;
+  if (isShiTeacherHome(url)) return true;
+  if (!isSchoolOfficialUrl(url)) return false;
+  if (PROFILE_LIST_PAGE_RE.test(url)) return false;
+  return PROFILE_DETAIL_PAGE_RE.test(url);
+}
+
+function hasDirectProfile(detail) {
+  return Boolean(
+    isShiTeacherHome(detail?.teacherHomeUrl) ||
+    isLikelyProfileUrl(detail?.officialUrl) ||
+    isLikelyProfileUrl(detail?.profileUrl),
+  );
 }
 
 function firstValue(...values) {
@@ -257,12 +295,7 @@ function uniqueItems(items) {
 function cleanTag(tag) {
   const text = cleanText(tag);
   if (!text) return undefined;
-  if (text === "硕士生导师" || text === "博士生导师" || text === "兼职导师") return text;
-  if (DIRECTION_FORBIDDEN_RE.test(text) || SUMMARY_FORBIDDEN_RE.test(text)) return undefined;
-  if (/[。；;：:]/.test(text)) return undefined;
-  if (/奖|审稿人|实验室|主要方向|研究内容|研究主要包括|前沿突破/.test(text)) return undefined;
-  if (text.length > 42) return undefined;
-  return text;
+  return ALLOWED_TAGS.has(text) ? text : undefined;
 }
 
 function cleanTags(tags) {
@@ -297,6 +330,8 @@ function getCleanResearchSummary(value) {
     .slice(0, 220);
   if (!summary || summary.length < 12) return undefined;
   if (!/[\u4e00-\u9fa5]/.test(summary)) return undefined;
+  if (PROFILE_NOISE_RE.test(summary)) return undefined;
+  if (/扫描手机二维码|欢迎您的访问|位访客|开通时间|最后更新时间|登录\|\s*English\s*\|\s*手机版/.test(summary)) return undefined;
   if (/@buaa\.edu\.cn|E-?Mail|电子邮箱|联系方式/i.test(summary)) return undefined;
   if (/^[等及、，。；\s]+项目/.test(summary)) return undefined;
   if (/[\u4e00-\u9fa5]{2,4}\s*(教授|副教授|讲师|研究员|副研究员|硕导|博导)/.test(summary)) return undefined;
@@ -309,6 +344,14 @@ function splitDirectionText(value) {
   const normalized = cleanSectionText(value)
     .replace(/^【?(研究方向|研究领域|招生方向|主要研究方向)】?[:：]?/, "")
     .replace(/\.{3,}/g, "");
+  if (!normalized || PROFILE_NOISE_RE.test(normalized)) return [];
+  const inlineNumberedItems = cleanDirectionItems(
+    normalized
+      .split(/\s*(?:\[\d+\]|\(\d+\)|（\d+）)\s*/)
+      .map((item) => item.trim())
+      .filter(Boolean),
+  );
+  if (inlineNumberedItems.length >= 2) return inlineNumberedItems;
   const lines = normalized.split(/\n+/).map(cleanText).filter(Boolean);
   const numberedLines = lines
     .filter((line) => /^(?:\[\d+\]|\(\d+\)|（\d+）|\d+[.、])\s*/.test(line))
@@ -324,13 +367,14 @@ function splitDirectionText(value) {
       .filter(Boolean),
   );
   if (compactListItems.length >= 2) return compactListItems.slice(0, 6);
+  if (normalized.length > 120) return [];
 
   const numbered = [...normalized.matchAll(/(?:^|\n)\s*(?:\[\d+\]|\(\d+\)|（\d+）|\d+[.、])\s*([^\n]+)/g)]
     .map((match) => match[1]);
   const pieces = [
     ...numbered,
     ...lines,
-    ...normalized.split(/[;；。，,]/),
+    ...(normalized.length <= 80 ? normalized.split(/[;；、，,]/) : []),
   ];
   return uniqueItems(
     pieces
@@ -341,16 +385,18 @@ function splitDirectionText(value) {
 
 function cleanDirectionItem(value) {
   const rawItem = cleanText(value);
+  if (!rawItem || PROFILE_NOISE_RE.test(rawItem) || DIRECTION_NARRATIVE_RE.test(rawItem)) return undefined;
   if (/^(通过|利用|结合|解析|探索|开展|加强|重点|针对|研发|实现|提升|研究制定|协同|对人体|在全基因组|本实验室|基于|常用|上述|这些|为制定|制定|催生|推动|参与|担任|聚焦于|将)/.test(rawItem)) return undefined;
   if (/var\s+_tsites|ImageScale|点赞|学生信息|访客|点击次数|发布时间/i.test(rawItem)) return undefined;
   if (/近\d+年承担|近五年承担/.test(rawItem)) return undefined;
-  if (/获.*奖|竞赛|专著|教程|经费|万元|在研|主持人?|科技进步|挑战杯|擂主|揭榜挂帅|第一完成人|出版|审稿人/i.test(rawItem)) return undefined;
+  if (/获.*奖|竞赛|专著|教程|经费|万元|在研|主持人?|科技进步|挑战杯|擂主|揭榜挂帅|第一完成人|出版|审稿人|理事|编委|委员会/i.test(rawItem)) return undefined;
+  if (/^[\u4e00-\u9fa5]{2,4}[，,][\u4e00-\u9fa5]{2,4}/.test(rawItem)) return undefined;
   const item = rawItem
     .replace(/^Ø+\s*/, "")
     .replace(/^[•·▪◦]\s*/, "")
     .replace(/^[】\]）),，、.。．\s]+|[,，、\s.。…]+$/g, "")
     .replace(/^[：:]\s*/, "")
-    .replace(/^\[\d+\]\s*/, "")
+    .replace(/^[\[(（［【]?\d+[\])）］】、.]*\s*/, "")
     .replace(/^\d+[）)、.]\s*/, "")
     .replace(/^\d+\s+/, "")
     .replace(/^[a-z][.、]\s*/i, "")
@@ -372,7 +418,7 @@ function cleanDirectionItem(value) {
     .replace(/\s+(?:开展|研发|研究|加强|重点|针对|集中|主要|通过|利用|结合|解析|探索|服务|担任).*$/, "")
     .replace(/^(并)?(探索|解析|开展|研究|开发|研发)/, "")
     .replace(/主$/, "");
-  if (item.length < 4 || item.length > 52) return undefined;
+  if (item.length < 4 || item.length > 40) return undefined;
   if (!/[\u4e00-\u9fa5]/.test(item)) return undefined;
   if (DIRECTION_FORBIDDEN_RE.test(item)) return undefined;
   if (/作为|欢迎|访客|点击|发布时间|学生信息/.test(item)) return undefined;
@@ -385,12 +431,32 @@ function cleanDirectionItem(value) {
 }
 
 function cleanDirectionItems(items) {
-  return uniqueItems((items ?? []).map(cleanDirectionItem).filter(Boolean)).slice(0, 6);
+  return uniqueItems(
+    (items ?? [])
+      .flatMap((item) => {
+        const text = cleanSectionText(item);
+        if (!text) return [];
+        return /\[\d+\]|\(\d+\)|（\d+）/.test(text)
+          ? text.split(/\s*(?:\[\d+\]|\(\d+\)|（\d+）)\s*/).filter(Boolean)
+          : [text];
+      })
+      .map(cleanDirectionItem)
+      .filter(Boolean),
+  ).slice(0, 6);
+}
+
+function cleanTitle(value) {
+  const titleTokens = uniqueItems(
+    cleanText(value).match(/副主任医师|主任医师|副研究员|助理教授|副教授|研究员|讲师|教授|医师/g) ?? [],
+  );
+  return titleTokens.length ? titleTokens.join("、") : undefined;
 }
 
 function getTitle(text, fallback) {
-  const titleMatch = cleanText(text).match(/(教授|副教授|讲师|助理教授|研究员|副研究员|主任医师|副主任医师|医师)(?:、?(?:硕士生导师|博士生导师|博导|硕导|医师))*/);
-  return titleMatch?.[0]?.replace(/\/+/g, "、") ?? fallback;
+  const titleMatch = cleanText(text).match(
+    /(副主任医师|主任医师|副研究员|助理教授|副教授|研究员|讲师|教授|医师)(?:、?(?:副主任医师|主任医师|副研究员|助理教授|副教授|研究员|讲师|教授|医师|硕士生导师|博士生导师|博导|硕导))*/,
+  );
+  return cleanTitle(titleMatch?.[0]) ?? cleanTitle(fallback);
 }
 
 function getResearchSummary(text) {
@@ -440,6 +506,7 @@ function getStructuredSections($) {
     for (let nextIndex = index + 1; nextIndex < blocks.length; nextIndex += 1) {
       const nextText = cleanText($(blocks[nextIndex]).text());
       if (!nextText) continue;
+      if (PROFILE_NOISE_RE.test(nextText)) continue;
       if (SECTION_LABEL_RE.test(nextText)) break;
       if (nextText === currentText || seen.has(nextText)) continue;
       seen.add(nextText);
@@ -1036,12 +1103,10 @@ async function getMseDetailPages() {
 
 function getProfileFetchUrl(detail) {
   return firstValue(
-    detail.officialUrl,
-    isSchoolOfficialUrl(detail.profileUrl) ? detail.profileUrl : undefined,
-    isSchoolOfficialUrl(detail.sourceUrl) ? detail.sourceUrl : undefined,
-    detail.teacherHomeUrl,
-    detail.profileUrl,
-    detail.sourceUrl,
+    isLikelyProfileUrl(detail.officialUrl) ? detail.officialUrl : undefined,
+    isLikelyProfileUrl(detail.profileUrl) ? detail.profileUrl : undefined,
+    isLikelyProfileUrl(detail.sourceUrl) ? detail.sourceUrl : undefined,
+    isShiTeacherHome(detail.teacherHomeUrl) ? detail.teacherHomeUrl : undefined,
   );
 }
 
@@ -1113,28 +1178,57 @@ async function getMseOfficialDetails(mseProfiles) {
 function deriveDirectionsFromSummary(details) {
   return Object.fromEntries(Object.entries(details).map(([name, detail]) => {
     const currentDirections = cleanDirectionItems(detail.directions);
+    const summary = cleanSectionText(detail.researchSummary);
+    const canDeriveFromSummary = Boolean(
+      summary &&
+      summary.length <= 80 &&
+      !DIRECTION_NARRATIVE_RE.test(summary) &&
+      !/。/.test(summary) &&
+      (
+        /(?:^|\n)\s*(?:\[\d+\]|\(\d+\)|（\d+）|\d+[.、])/.test(summary) ||
+        /[;；、，,]/.test(summary)
+      )
+    );
     const directions = currentDirections.length
       ? currentDirections
-      : splitDirectionText(detail.researchSummary);
+      : (canDeriveFromSummary ? splitDirectionText(detail.researchSummary) : []);
     return [name, { ...detail, directions }];
   }));
 }
 
-function addDirectionTags(details) {
-  return Object.fromEntries(Object.entries(details).map(([name, detail]) => {
-    const directions = cleanDirectionItems(detail.directions);
-    return [name, {
-      ...detail,
-      directions,
-      tags: cleanTags([...(detail.tags ?? []), ...directions]),
-    }];
-  }));
+function sortNames(names) {
+  return Array.from(names).sort((a, b) => a.localeCompare(b, "zh-Hans-CN"));
+}
+
+function getNamesNeedingManualReview(details, names) {
+  return sortNames(Array.from(names).filter((name) => !hasDirectProfile(details[name] ?? {})));
+}
+
+function ensureTargetCoverage(details, names) {
+  return Object.fromEntries(sortNames(names).map((name) => [name, details[name] ?? {}]));
+}
+
+function sanitizeDetail(detail) {
+  const cleanSummary = getCleanResearchSummary(detail.researchSummary);
+  return {
+    ...detail,
+    title: cleanTitle(detail.title),
+    tags: cleanTags(detail.tags ?? []),
+    directions: cleanDirectionItems(detail.directions ?? []),
+    researchSummary: cleanSummary,
+  };
+}
+
+function sanitizeDetails(details) {
+  return Object.fromEntries(Object.entries(details).map(([name, detail]) => [name, sanitizeDetail(detail)]));
 }
 
 async function main() {
   const existing = await loadExistingDetails();
   const targetNames = getTargetNames(await fs.readFile(APP_SOURCE, "utf8"));
   const bmeFallbacksForMse = pickSharedTeacherFallbacks(existing.bme ?? {}, targetNames.mse);
+  const bmeManualOverrides = pickNames(supervisorManualOverrides.bme ?? {}, targetNames.bme);
+  const mseManualOverrides = pickNames(supervisorManualOverrides.mse ?? {}, targetNames.mse);
 
   const [
     bmeTeacherHtml,
@@ -1167,21 +1261,24 @@ async function main() {
     bmePhdHtml ? parsePhdAdmissions(bmePhdHtml, URLS.bmePhd2026, targetNames.all) : {},
     msePhdHtml ? parsePhdAdmissions(msePhdHtml, URLS.msePhd2026, targetNames.all) : {},
   );
-  const baseBmeDetails = pickNames(mergeDetails(existing.bme ?? {}, shiTeachers, bmeTeachers, admissions), targetNames.bme);
+  const baseBmeDetails = ensureTargetCoverage(
+    pickNames(mergeDetails(existing.bme ?? {}, shiTeachers, bmeTeachers, admissions, bmeManualOverrides), targetNames.bme),
+    targetNames.bme,
+  );
   const baseMseDetails = pickNames(
-    mergeDetails(existing.mse ?? {}, bmeFallbacksForMse, shiTeachers, msePeopleDetails, mseDetails, mseOfficialDetails, admissions),
+    mergeDetails(existing.mse ?? {}, bmeFallbacksForMse, shiTeachers, msePeopleDetails, mseDetails, mseOfficialDetails, admissions, mseManualOverrides),
     targetNames.mse,
   );
   const shiSearchTeachers = await getShiSearchDetails(new Set([
     ...getNamesMissingShiProfile(baseBmeDetails, targetNames.bme),
     ...getNamesMissingShiProfile(baseMseDetails, targetNames.mse),
   ]));
-  const bmeEnriched = deriveDirectionsFromSummary(await enrichProfiles(
-    pickNames(mergeDetails(baseBmeDetails, shiSearchTeachers), targetNames.bme),
+  const bmeEnriched = sanitizeDetails(ensureTargetCoverage(deriveDirectionsFromSummary(await enrichProfiles(
+    pickNames(mergeDetails(baseBmeDetails, shiSearchTeachers, bmeManualOverrides), targetNames.bme),
     "bme",
-  ));
-  const mseEnriched = addDirectionTags(deriveDirectionsFromSummary(await enrichProfiles(
-    pickNames(mergeDetails(baseMseDetails, shiSearchTeachers), targetNames.mse),
+  )), targetNames.bme));
+  const mseEnriched = sanitizeDetails(deriveDirectionsFromSummary(await enrichProfiles(
+    pickNames(mergeDetails(baseMseDetails, shiSearchTeachers, mseManualOverrides), targetNames.mse),
     "mse",
   )));
   const sortObject = (object) => Object.fromEntries(Object.entries(object).sort(([a], [b]) => a.localeCompare(b, "zh-Hans-CN")));
@@ -1203,17 +1300,17 @@ async function main() {
   };
   const content = `// Auto-generated from public BUAA school pages. Run: npm run generate:details\nexport const supervisorDetails = ${JSON.stringify(supervisorDetails, null, 2)};\n`;
   await fs.writeFile(OUTPUT, content, "utf8");
-  const needsManualProfile = [
-    ...getNamesMissingShiProfile(bmeEnriched, targetNames.bme).map((name) => `生物与医学工程学院:${name}`),
-    ...getNamesMissingShiProfile(mseEnriched, targetNames.mse).map((name) => `医学科学与工程学院:${name}`),
-  ];
+  const manualReview = {
+    bme: getNamesNeedingManualReview(bmeEnriched, targetNames.bme),
+    mse: getNamesNeedingManualReview(mseEnriched, targetNames.mse),
+  };
   console.log(
     `Generated ${Object.keys(bmeEnriched).length} BME, ${Object.keys(mseEnriched).length} MSE, ` +
     `${Object.keys(admissions).length} admission records -> ${path.relative(ROOT, OUTPUT)}`,
   );
-  if (needsManualProfile.length) {
-    console.log(`Manual profile confirmation still needed: ${needsManualProfile.join("、")}`);
-  }
+  console.log(`Manual review pending: BME ${manualReview.bme.length}, MSE ${manualReview.mse.length}`);
+  if (manualReview.bme.length) console.log(`BME manual review list: ${manualReview.bme.join("、")}`);
+  if (manualReview.mse.length) console.log(`MSE manual review list: ${manualReview.mse.join("、")}`);
 }
 
 main().catch((error) => {
