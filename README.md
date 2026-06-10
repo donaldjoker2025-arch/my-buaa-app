@@ -171,14 +171,14 @@ git push origin main
 如果某一版你希望长期保留归档，推荐这样做：
 
 ```bash
-git tag release-v0.1.0
-git push origin release-v0.1.0
+git tag release-v0.1.1
+git push origin release-v0.1.1
 ```
 
 推送这个 tag 后，GitHub Actions 会自动把这一版发布到：
 
 ```text
-https://donaldjoker2025-arch.github.io/my-buaa-app/releases/release-v0.1.0/
+https://donaldjoker2025-arch.github.io/my-buaa-app/releases/release-v0.1.1/
 ```
 
 ### 手动发布作为兜底

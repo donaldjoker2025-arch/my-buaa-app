@@ -952,15 +952,61 @@ svg {
 .direction-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 14px;
+  gap: 16px;
+}
+
+.direction-section {
+  display: grid;
+  gap: 16px;
+}
+
+.direction-section + .direction-section {
+  margin-top: 18px;
+}
+
+.direction-section__intro {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 18px 20px;
+  border: 1px solid rgba(39, 103, 177, 0.14);
+  border-radius: var(--radius);
+  background:
+    radial-gradient(circle at top right, rgba(39, 103, 177, 0.08), transparent 34%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(240, 246, 250, 0.96));
+  box-shadow: 0 8px 28px rgba(34, 55, 72, 0.06);
+}
+
+.direction-section__intro h3 {
+  margin: 8px 0 0;
+  font-size: 20px;
+}
+
+.direction-section__intro p {
+  max-width: 760px;
+  margin: 10px 0 0;
+  color: var(--text-muted);
+  font-size: 14px;
+  line-height: 1.75;
+}
+
+.direction-section__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
 .direction-card {
-  padding: 18px;
+  display: grid;
+  gap: 14px;
+  padding: 20px;
   border: 1px solid var(--line);
   border-radius: var(--radius);
-  background: var(--surface);
-  box-shadow: 0 6px 24px rgba(34, 55, 72, 0.06);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(244, 249, 252, 0.98)),
+    var(--surface);
+  box-shadow: 0 10px 30px rgba(34, 55, 72, 0.07);
 }
 
 .direction-card__header {
@@ -1007,6 +1053,13 @@ svg {
 
 .direction-card__meta {
   margin-bottom: 13px;
+}
+
+.direction-card__note {
+  margin: -6px 0 0;
+  color: var(--text-muted);
+  font-size: 13px;
+  line-height: 1.75;
 }
 
 .mentor-cloud {
@@ -1190,7 +1243,8 @@ svg {
 }
 
 .mentor-lab-layout {
-  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
+  gap: 16px;
 }
 
 .mentor-lab-panel,
@@ -1207,7 +1261,13 @@ svg {
 .mentor-lab-panel,
 .mentor-lab-card,
 .mentor-lab-empty {
-  padding: 18px;
+  padding: 20px;
+}
+
+.mentor-lab-panel--profile {
+  background:
+    radial-gradient(circle at top right, rgba(39, 103, 177, 0.14), transparent 36%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.99), rgba(240, 246, 250, 0.97));
 }
 
 .mentor-lab-panel__header,
@@ -1244,6 +1304,77 @@ svg {
   grid-template-columns: minmax(180px, 220px) minmax(0, 1fr);
   gap: 14px;
   margin-top: 14px;
+}
+
+.mentor-lab-overview {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(300px, 0.8fr);
+  gap: 16px;
+}
+
+.mentor-lab-overview__hero,
+.mentor-lab-kpi {
+  border: 1px solid rgba(39, 103, 177, 0.14);
+  border-radius: var(--radius);
+  background:
+    radial-gradient(circle at top right, rgba(39, 103, 177, 0.12), transparent 34%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.99), rgba(241, 247, 251, 0.96));
+  box-shadow: 0 10px 30px rgba(34, 55, 72, 0.07);
+}
+
+.mentor-lab-overview__hero {
+  padding: 22px;
+}
+
+.mentor-lab-overview__hero h3 {
+  margin: 8px 0 0;
+  font-size: 28px;
+  letter-spacing: -0.03em;
+}
+
+.mentor-lab-overview__hero p {
+  margin: 10px 0 0;
+  color: var(--text-muted);
+  line-height: 1.75;
+}
+
+.mentor-lab-overview__spotlight {
+  padding: 12px 14px;
+  border-radius: var(--radius-sm);
+  background: rgba(39, 103, 177, 0.08);
+  color: var(--text);
+  font-size: 14px;
+}
+
+.mentor-lab-viewbar,
+.mentor-lab-kpis {
+  display: grid;
+  gap: 10px;
+}
+
+.mentor-lab-viewbar {
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  margin-top: 18px;
+}
+
+.mentor-lab-kpis {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.mentor-lab-kpi {
+  display: grid;
+  gap: 8px;
+  padding: 18px;
+}
+
+.mentor-lab-kpi strong {
+  font-size: 28px;
+  line-height: 1;
+}
+
+.mentor-lab-kpi span {
+  color: var(--text-muted);
+  font-size: 13px;
 }
 
 .mentor-lab-toggle-group,
@@ -1418,6 +1549,29 @@ svg {
 .mentor-lab-card {
   display: grid;
   gap: 14px;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+}
+
+.mentor-lab-card:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 12px 32px rgba(34, 55, 72, 0.1);
+}
+
+.mentor-lab-card--high {
+  border-color: rgba(38, 115, 91, 0.22);
+}
+
+.mentor-lab-card--medium {
+  border-color: rgba(39, 103, 177, 0.2);
+}
+
+.mentor-lab-card--low {
+  border-color: rgba(187, 139, 74, 0.24);
+}
+
+.mentor-lab-card__identity {
+  display: grid;
+  gap: 10px;
 }
 
 .mentor-lab-card__headline {
@@ -1437,6 +1591,14 @@ svg {
   font-size: 13px;
 }
 
+.mentor-lab-card__lead {
+  margin: 0;
+  color: var(--text);
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.6;
+}
+
 .mentor-lab-card__chips,
 .mentor-lab-card__actions {
   display: flex;
@@ -1450,7 +1612,7 @@ svg {
 
 .mentor-lab-card__stats {
   display: grid;
-  grid-template-columns: repeat(3, minmax(72px, 1fr));
+  grid-template-columns: repeat(4, minmax(72px, 1fr));
   gap: 8px;
 }
 
@@ -1458,7 +1620,7 @@ svg {
   padding: 10px 8px;
   border: 1px solid var(--line);
   border-radius: var(--radius-sm);
-  background: var(--bg-soft);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(244, 249, 252, 0.96));
   text-align: center;
 }
 
@@ -1478,6 +1640,10 @@ svg {
 .mentor-lab-card__body {
   display: grid;
   gap: 12px;
+}
+
+.mentor-lab-card__actions {
+  align-items: center;
 }
 
 .action-board {
@@ -1555,6 +1721,11 @@ svg {
     min-height: 0;
   }
 
+  .direction-section__intro,
+  .mentor-lab-overview {
+    grid-template-columns: 1fr;
+  }
+
   .topic-heatmap {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -1569,6 +1740,10 @@ svg {
   .mentor-lab-panel__header,
   .mentor-lab-result-group__header {
     flex-direction: column;
+  }
+
+  .mentor-lab-kpis {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
 
@@ -1613,6 +1788,7 @@ svg {
   .supervisor-card__summary,
   .supervisor-card__detail,
   .direction-card,
+  .direction-section__intro,
   .checklist-panel,
   .advice-card,
   .mentor-lab-panel,
@@ -1642,6 +1818,10 @@ svg {
     padding: 0 14px 14px;
   }
 
+  .direction-section__chips {
+    width: 100%;
+  }
+
   .evidence-list {
     grid-template-columns: 1fr;
   }
@@ -1657,6 +1837,7 @@ svg {
   }
 
   .mentor-lab-card__stats,
+  .mentor-lab-kpis,
   .compare-board__cards {
     grid-template-columns: 1fr;
   }
@@ -1664,7 +1845,8 @@ svg {
   .mentor-lab-card__actions .link-button,
   .toggle-button,
   .topic-chip,
-  .shortlist-pill {
+  .shortlist-pill,
+  .mentor-lab-viewbar .toggle-button {
     width: 100%;
   }
 }

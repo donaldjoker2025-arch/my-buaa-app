@@ -250,6 +250,56 @@ function uniqueItems(items) {
   return Array.from(new Set(items.filter(Boolean)));
 }
 
+function sortZhText(a, b) {
+  return a.localeCompare(b, "zh-Hans-CN");
+}
+
+const mseDirectionThemes = [
+  {
+    code: "M1",
+    name: "医学影像与智能诊断",
+    description: "按医工学院官网公开方向中的医学影像、病理分析、医学 AI 与智能诊断相关标签聚类。",
+    matchers: [/影像|成像|图像|病理|拉曼|光声|高光谱|内窥镜|人工智能|机器学习|深度学习|大模型|智能体|大数据|诊断/u],
+  },
+  {
+    code: "M2",
+    name: "生物材料与组织修复",
+    description: "聚焦生物材料、组织工程、再生修复、外泌体与植介入材料等方向。",
+    matchers: [/材料|组织工程|再生|修复|外泌体|支架|植介入|角膜|骨|细胞与微生物治疗/u],
+  },
+  {
+    code: "M3",
+    name: "生物力学与康复辅具",
+    description: "覆盖生物力学、康复工程、柔性可穿戴辅具和人因相关研究。",
+    matchers: [/生物力学|计算生物力学|血流动力学|康复|辅具|机器人|人因|工效|抗荷服|训练伤/u],
+  },
+  {
+    code: "M4",
+    name: "生物传感与医疗器械",
+    description: "覆盖生物传感器、芯片、体外诊断、柔性电子与医疗器械研制等方向。",
+    matchers: [/传感|芯片|体外诊断|柔性电子|医疗器械|仪器|微机电|检测系统|药物递送/u],
+  },
+  {
+    code: "M5",
+    name: "分子医学与精准治疗",
+    description: "聚焦分子影像、基因组学、蛋白质组学、精准诊疗与肿瘤治疗等主题。",
+    matchers: [/分子|基因|蛋白|组学|精准|肿瘤|癌症|病原菌|耐药|生物信息学|诊疗/u],
+  },
+  {
+    code: "M6",
+    name: "空天医学与特种医学",
+    description: "把航空航天医学、失重生理、智能供氧与特种医学交叉方向集中展示。",
+    matchers: [/航空|航天|失重|供氧|特种医学|空天|飞行员/u],
+  },
+];
+
+const mentorLabViewOptions = [
+  { id: "all", label: "全部候选", description: "保留当前画像下的完整排序。" },
+  { id: "priority", label: "优先核验", description: "优先看高度相关或已具备直接联系条件的导师。" },
+  { id: "contact", label: "只看可联系", description: "只保留已有公开邮箱、适合尽快联系的候选。" },
+  { id: "shortlist", label: "我的待联系", description: "只看当前浏览器里已经收藏的候选。" },
+];
+
 function uniqueAdmissions(items) {
   const seen = new Set();
   return items.filter((item) => {
@@ -589,6 +639,65 @@ const mentorLabTopicStats = Array.from(
     schools: Array.from(entry.schools),
   }))
   .sort((a, b) => b.total - a.total || b.schoolCount - a.schoolCount || a.topic.localeCompare(b.topic, "zh-Hans-CN"));
+const mseDirectionAreas = (() => {
+  const mseSupervisors = supervisors.filter((item) => item.schoolKey === "mse");
+  const matchedNames = new Set();
+  const areas = mseDirectionThemes
+    .map((theme) => {
+      const mentors = uniqueItems(
+        mseSupervisors
+          .filter((item) => {
+            const haystack = [
+              ...(item.topicTags ?? []),
+              ...item.directions,
+              item.researchSummary ?? "",
+            ].join(" ");
+            const isMatch = theme.matchers.some((pattern) => pattern.test(haystack));
+            if (isMatch) {
+              matchedNames.add(item.name);
+            }
+            return isMatch;
+          })
+          .map((item) => item.name),
+      ).sort(sortZhText);
+
+      return {
+        code: theme.code,
+        group: "医工学院研究方向补充",
+        name: theme.name,
+        mentors,
+        countLabel: "师资",
+        badges: [
+          { label: "官网研究方向聚类", tone: "blue" },
+          { label: "非官方培养方案表", tone: "slate" },
+        ],
+        description: theme.description,
+      };
+    })
+    .filter((area) => area.mentors.length > 0);
+
+  const unmatchedMentors = mseSupervisors
+    .filter((item) => !matchedNames.has(item.name))
+    .map((item) => item.name)
+    .sort(sortZhText);
+
+  if (unmatchedMentors.length > 0) {
+    areas.push({
+      code: "M7",
+      group: "医工学院研究方向补充",
+      name: "其他医工交叉方向",
+      mentors: unmatchedMentors,
+      countLabel: "师资",
+      badges: [
+        { label: "官网研究方向聚类", tone: "blue" },
+        { label: "待继续细分", tone: "outline" },
+      ],
+      description: "用于承接当前公开方向里暂不适合并入前述主题的师资，避免静默遗漏。",
+    });
+  }
+
+  return areas;
+})();
 const supervisorIds = new Set(supervisors.map((item) => item.id));
 const mentorLabDefaultProfile = {
   topics: [],
@@ -1335,6 +1444,10 @@ function SupervisorCard({ item, expanded, onToggle, pendingCount, onSubmitNote }
 function DirectionCard({ area }) {
   const parsedMentors = area.mentors.map(parseMentor);
   const partTimeCount = parsedMentors.filter((mentor) => mentor.partTime).length;
+  const badges = area.badges ?? [
+    { label: "全量纳入", tone: "green" },
+    ...(partTimeCount > 0 ? [{ label: `${partTimeCount} 位兼职导师`, tone: "amber" }] : []),
+  ];
 
   return (
     <article className="direction-card">
@@ -1344,14 +1457,14 @@ function DirectionCard({ area }) {
           <h3>{area.code} {area.name}</h3>
         </div>
         <div className="direction-card__count">
-          <strong>{area.mentors.length}</strong>
-          <span>导师</span>
+          <strong>{parsedMentors.length}</strong>
+          <span>{area.countLabel ?? "导师"}</span>
         </div>
       </div>
       <div className="direction-card__meta">
-        <Chip tone="green">全量纳入</Chip>
-        {partTimeCount > 0 && <Chip tone="amber">{partTimeCount} 位兼职导师</Chip>}
+        {badges.map((badge) => <Chip key={`${area.code}-${badge.label}`} tone={badge.tone}>{badge.label}</Chip>)}
       </div>
+      {area.description && <p className="direction-card__note">{area.description}</p>}
       <div className="mentor-cloud">
         {parsedMentors.map(({ name, partTime }) => (
           <span key={`${area.code}-${name}`} className={partTime ? "mentor-pill mentor-pill--part-time" : "mentor-pill"}>
@@ -1372,19 +1485,25 @@ function MentorLabResultCard({
   onOpenMentor,
 }) {
   const directions = getDirectionItems(entry.item);
+  const advisorTag = entry.item.tags.find(isAdvisorTag);
+  const primaryDirection = getPrimaryDirection(entry.item);
+  const nextStepLabel = entry.item.email ? "邮箱" : (entry.item.profileUrl || entry.item.teacherHomeUrl ? "主页" : "待补");
 
   return (
-    <article className="mentor-lab-card">
+    <article className={`mentor-lab-card mentor-lab-card--${entry.matchTier}`}>
       <div className="mentor-lab-card__header">
-        <div>
+        <div className="mentor-lab-card__identity">
           <div className="mentor-lab-card__headline">
             <h3>{entry.item.name}</h3>
             <span>{entry.item.title}</span>
           </div>
+          <p className="mentor-lab-card__lead">{primaryDirection}</p>
           <div className="mentor-lab-card__chips">
             <Chip tone={entry.item.school === "医学科学与工程学院" ? "blue" : "green"}>{entry.item.school}</Chip>
             <Chip tone={getMatchTierTone(entry.matchTier)}>{getMatchTierLabel(entry.matchTier)}</Chip>
+            <Chip tone={getActionBucketTone(entry.actionBucket)}>{getActionBucketLabel(entry.actionBucket)}</Chip>
             <Chip tone="slate">{entry.evidence.label}</Chip>
+            {advisorTag && <Chip tone={getTagTone(advisorTag)}>{advisorTag}</Chip>}
             {isShortlisted && <Chip tone="amber">已加入待联系</Chip>}
           </div>
         </div>
@@ -1398,15 +1517,19 @@ function MentorLabResultCard({
             <span>公开方向</span>
           </div>
           <div>
-            <strong>{entry.item.email ? "有" : "待查"}</strong>
-            <span>邮箱</span>
+            <strong>{entry.evidence.count}/{entry.evidence.total}</strong>
+            <span>证据线索</span>
+          </div>
+          <div>
+            <strong>{nextStepLabel}</strong>
+            <span>下一步入口</span>
           </div>
         </div>
       </div>
 
       <div className="mentor-lab-card__body">
         <div>
-          <span className="detail-label">为什么会出现</span>
+          <span className="detail-label">推荐理由</span>
           <div className="chip-row">
             {entry.matchReasons.map((reason) => <Chip key={reason}>{reason}</Chip>)}
           </div>
@@ -1429,17 +1552,17 @@ function MentorLabResultCard({
       </div>
 
       <div className="mentor-lab-card__actions">
+        <button type="button" className="link-button link-button--strong" onClick={() => onOpenMentor(entry.item)}>
+          在索引中查看
+        </button>
         <button type="button" className="link-button" onClick={() => onToggleCompare(entry.item.id)}>
           {isCompared ? "移出对比台" : "加入对比台"}
         </button>
         <button type="button" className="link-button" onClick={() => onToggleShortlist(entry.item.id)}>
           {isShortlisted ? "移出待联系" : "加入待联系"}
         </button>
-        <button type="button" className="link-button" onClick={() => onOpenMentor(entry.item)}>
-          在索引中查看
-        </button>
         {entry.item.email && (
-          <a className="link-button link-button--strong" href={`mailto:${entry.item.email}`}>
+          <a className="link-button" href={`mailto:${entry.item.email}`}>
             <Mail aria-hidden="true" />
             联系邮箱
           </a>
@@ -1534,7 +1657,10 @@ function MentorLabComparePanel({ items, diffOnly, onToggleDiff, onRemove }) {
 
 function MentorLabSection({
   profile,
+  allResults,
   results,
+  view,
+  overview,
   compareItems,
   shortlistItems,
   compareDiffOnly,
@@ -1542,6 +1668,7 @@ function MentorLabSection({
   onToggleTopic,
   onUpdateProfile,
   onResetProfile,
+  onChangeView,
   onToggleCompare,
   onToggleShortlist,
   onOpenMentor,
@@ -1553,12 +1680,13 @@ function MentorLabSection({
     low: results.filter((entry) => entry.matchTier === "low"),
   };
   const actionGroups = {
-    contact: results.filter((entry) => entry.actionBucket === "contact").slice(0, 6),
-    review: results.filter((entry) => entry.actionBucket === "review").slice(0, 6),
-    watch: results.filter((entry) => entry.actionBucket === "watch").slice(0, 6),
+    contact: allResults.filter((entry) => entry.actionBucket === "contact").slice(0, 6),
+    review: allResults.filter((entry) => entry.actionBucket === "review").slice(0, 6),
+    watch: allResults.filter((entry) => entry.actionBucket === "watch").slice(0, 6),
   };
   const selectedTopicSet = new Set(profile.topics);
   const highlightedHeatTopics = mentorLabTopicStats.slice(0, 24);
+  const currentView = mentorLabViewOptions.find((option) => option.id === view) ?? mentorLabViewOptions[0];
   const resultSections = [
     { key: "high", title: "高度相关", description: "方向命中较多，且资料线索相对完整。", items: groupedResults.high },
     { key: "medium", title: "可继续看", description: "已有兴趣重合，适合先进主页继续核验。", items: groupedResults.medium },
@@ -1661,6 +1789,49 @@ function MentorLabSection({
         </div>
       )}
 
+      <div className="mentor-lab-overview">
+        <div className="mentor-lab-overview__hero">
+          <span className="eyebrow">结果总览</span>
+          <h3>{currentView.label}</h3>
+          <p>{currentView.description}</p>
+          <p className="mentor-lab-overview__spotlight">{overview.topicSummary}</p>
+          <div className="mentor-lab-viewbar">
+            {mentorLabViewOptions.map((option) => (
+              <button
+                key={option.id}
+                type="button"
+                className={view === option.id ? "toggle-button toggle-button--active" : "toggle-button"}
+                onClick={() => onChangeView(option.id)}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div className="mentor-lab-kpis">
+          <div className="mentor-lab-kpi">
+            <strong>{overview.visibleCount}</strong>
+            <span>当前可见</span>
+          </div>
+          <div className="mentor-lab-kpi">
+            <strong>{overview.contactCount}</strong>
+            <span>可立即联系</span>
+          </div>
+          <div className="mentor-lab-kpi">
+            <strong>{overview.emailCount}</strong>
+            <span>可见邮箱</span>
+          </div>
+          <div className="mentor-lab-kpi">
+            <strong>{overview.shortlistCount}</strong>
+            <span>待联系收藏</span>
+          </div>
+          <div className="mentor-lab-kpi">
+            <strong>{overview.compareCount}</strong>
+            <span>对比台</span>
+          </div>
+        </div>
+      </div>
+
       <MentorLabComparePanel
         items={compareItems}
         diffOnly={compareDiffOnly}
@@ -1724,14 +1895,14 @@ function MentorLabSection({
         )}
       </div>
 
-      {profile.topics.length === 0 ? (
-        <div className="mentor-lab-empty">
-          <h3>先选择兴趣方向</h3>
-          <p>从热区图点几个你真正想申请的方向词，再看“高度相关 / 可继续看 / 信息待补”三档结果会更有意义。</p>
-        </div>
-      ) : (
-        <div className="mentor-lab-results">
-          {resultSections.map((section) => (
+        {profile.topics.length === 0 ? (
+          <div className="mentor-lab-empty">
+            <h3>先选择兴趣方向</h3>
+            <p>从热区图点几个你真正想申请的方向词，再看“高度相关 / 可继续看 / 信息待补”三档结果会更有意义。</p>
+          </div>
+        ) : (
+          <div className="mentor-lab-results">
+            {resultSections.map((section) => (
             <div key={section.key} className="mentor-lab-result-group">
               <div className="mentor-lab-result-group__header">
                 <div>
@@ -1755,7 +1926,7 @@ function MentorLabSection({
                   ))}
                 </div>
               ) : (
-                <p className="detail-copy">当前画像下这一档暂时没有导师。</p>
+                <p className="detail-copy">当前视图下，这一档暂时没有导师。</p>
               )}
             </div>
           ))}
@@ -1776,6 +1947,7 @@ export default function App() {
   const [mentorCompareList, setMentorCompareList] = useState(() => safeReadMentorLabIds(MENTOR_LAB_COMPARE_KEY));
   const [mentorShortlist, setMentorShortlist] = useState(() => safeReadMentorLabIds(MENTOR_LAB_SHORTLIST_KEY));
   const [compareDiffOnly, setCompareDiffOnly] = useState(false);
+  const [mentorLabView, setMentorLabView] = useState("all");
   const [mentorLabMessage, setMentorLabMessage] = useState("");
 
   useEffect(() => {
@@ -1915,6 +2087,19 @@ export default function App() {
       .sort((a, b) => compareMentorLabEntries(a, b, mentorLabProfile));
   }, [mentorLabProfile]);
 
+  const mentorLabVisibleResults = useMemo(() => {
+    if (mentorLabView === "priority") {
+      return mentorLabResults.filter((entry) => entry.matchTier === "high" || entry.actionBucket === "contact");
+    }
+    if (mentorLabView === "contact") {
+      return mentorLabResults.filter((entry) => entry.actionBucket === "contact");
+    }
+    if (mentorLabView === "shortlist") {
+      return mentorLabResults.filter((entry) => mentorShortlist.includes(entry.item.id));
+    }
+    return mentorLabResults;
+  }, [mentorLabResults, mentorLabView, mentorShortlist]);
+
   const mentorCompareItems = useMemo(() => {
     return mentorCompareList
       .map((id) => supervisors.find((item) => item.id === id))
@@ -1929,6 +2114,34 @@ export default function App() {
       .map((item) => buildMentorLabEntry(item, mentorLabProfile))
       .sort((a, b) => compareMentorLabEntries(a, b, mentorLabProfile));
   }, [mentorLabProfile, mentorShortlist]);
+
+  const mentorLabOverview = useMemo(() => {
+    const topicCounts = mentorLabVisibleResults.reduce((map, entry) => {
+      entry.matchDetails.interestHits.forEach((topic) => {
+        map.set(topic, (map.get(topic) ?? 0) + 1);
+      });
+      return map;
+    }, new Map());
+    const topTopics = Array.from(topicCounts.entries())
+      .sort((a, b) => b[1] - a[1] || sortZhText(a[0], b[0]))
+      .slice(0, 3)
+      .map(([topic]) => topic);
+    const topicSummary = mentorLabProfile.topics?.length
+      ? (topTopics.length > 0
+        ? `当前可见候选最常命中的兴趣：${topTopics.join(" / ")}`
+        : "当前画像下还没有明显兴趣命中，建议放宽学院或邮箱限制继续观察。")
+      : "先从热区图选择 3-5 个方向，结果会更有区分度。";
+
+    return {
+      visibleCount: mentorLabVisibleResults.length,
+      totalCount: mentorLabResults.length,
+      contactCount: mentorLabResults.filter((entry) => entry.actionBucket === "contact").length,
+      emailCount: mentorLabVisibleResults.filter((entry) => Boolean(entry.item.email)).length,
+      shortlistCount: mentorShortlistItems.length,
+      compareCount: mentorCompareItems.length,
+      topicSummary,
+    };
+  }, [mentorCompareItems, mentorLabProfile, mentorLabResults, mentorLabVisibleResults, mentorShortlistItems]);
 
   const tabs = [
     { id: "database", label: "导师索引", icon: Search },
@@ -2047,7 +2260,10 @@ export default function App() {
       {activeTab === "mentor-lab" && (
         <MentorLabSection
           profile={mentorLabProfile}
-          results={mentorLabResults}
+          allResults={mentorLabResults}
+          results={mentorLabVisibleResults}
+          view={mentorLabView}
+          overview={mentorLabOverview}
           compareItems={mentorCompareItems}
           shortlistItems={mentorShortlistItems}
           compareDiffOnly={compareDiffOnly}
@@ -2055,6 +2271,7 @@ export default function App() {
           onToggleTopic={handleToggleMentorTopic}
           onUpdateProfile={handleMentorLabProfileChange}
           onResetProfile={handleResetMentorLabProfile}
+          onChangeView={setMentorLabView}
           onToggleCompare={handleToggleCompare}
           onToggleShortlist={handleToggleShortlist}
           onOpenMentor={handleOpenMentorFromLab}
@@ -2064,11 +2281,39 @@ export default function App() {
 
       {activeTab === "directions" && (
         <section className="content-section">
-          <SectionTitle eyebrow="培养方向" title="按官方方向查看导师池">
-            已恢复并保留生物力学、生物医学材料、细胞与组织工程等方向，方便按专业兴趣反向查找导师。
+          <SectionTitle eyebrow="培养方向" title="按官方方向与公开研究方向查看导师池">
+            生医工学院继续保留官方培养方向表；医工学院补充为基于官网研究方向的聚类展示，方便把两院导师一起纳入反向筛选。
           </SectionTitle>
-          <div className="direction-grid">
-            {bmeDirections.map((area) => <DirectionCard key={`${area.group}-${area.code}`} area={area} />)}
+
+          <div className="direction-section">
+            <div className="direction-section__intro">
+              <div>
+                <span className="eyebrow">生医工学院</span>
+                <h3>官方培养方向表</h3>
+                <p>已恢复并保留生物力学、生物医学材料、细胞与组织工程等官方方向，方便按专业兴趣反向查找导师。</p>
+              </div>
+              <Chip tone="green">官方培养方向</Chip>
+            </div>
+            <div className="direction-grid">
+              {bmeDirections.map((area) => <DirectionCard key={`${area.group}-${area.code}`} area={area} />)}
+            </div>
+          </div>
+
+          <div className="direction-section">
+            <div className="direction-section__intro">
+              <div>
+                <span className="eyebrow">医工学院补充</span>
+                <h3>官网研究方向聚类</h3>
+                <p>医工学院当前在本地没有与生医工方向表同格式的官方培养方向总表，因此这里按官网教师详情中的公开方向聚类展示，便于把 MSE 师资也纳入择导视野。</p>
+              </div>
+              <div className="direction-section__chips">
+                <Chip tone="blue">官网研究方向聚类</Chip>
+                <Chip tone="slate">非官方培养方向表</Chip>
+              </div>
+            </div>
+            <div className="direction-grid">
+              {mseDirectionAreas.map((area) => <DirectionCard key={`${area.group}-${area.code}`} area={area} />)}
+            </div>
           </div>
         </section>
       )}
