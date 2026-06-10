@@ -10,8 +10,10 @@ const APP_SOURCE = path.join(ROOT, "src", "App.jsx");
 const INDEX_TIMEOUT_MS = 60000;
 const PROFILE_TIMEOUT_MS = 2500;
 const FETCH_PROFILE_DETAILS = process.env.BUAA_FETCH_PROFILES === "1";
+const REFRESH_CACHE = process.env.BUAA_REFRESH_CACHE === "1";
 const MAX_SHI_SEARCH_PAGES = 12;
 const PROFILE_BATCH_SIZE = 8;
+const TSITES_ENCRYPT_PATH = "/system/resource/tsites/tsitesencrypt.jsp";
 
 const URLS = {
   bmeTeachers: "https://bme.buaa.edu.cn/teachers.aspx?catID=7",
@@ -29,8 +31,10 @@ const BME_BASE = "https://bme.buaa.edu.cn/";
 const MSE_BASE = "https://ygy.buaa.edu.cn/szdw1/szryxx.htm";
 const SCHOOL_HOST_RE = /(?:^|\.)?(?:bme|ygy)\.buaa\.edu\.cn$/i;
 const SHI_HOST_RE = /(?:^|\.)?shi\.buaa\.edu\.cn$/i;
-const SUMMARY_FORBIDDEN_RE = /教育背景|教育经历|学习经历|工作经历|社会兼职|学术兼职|联系方式|电子邮箱|开授课程|同专业|获得.*学位|博士学位|大学本科|委员会|优秀教师奖|优秀青年|新世纪优秀人才|入选.*人才|支持计划|获奖|奖励|代表性论文|近五年代表性论著|获授权|高被引|国家自然科学基金|国家重点研发|项目负责人|基金|发表|期刊|会议|SCI|ESI|IEEE/i;
-const DIRECTION_FORBIDDEN_RE = /师资索引|教师索引|人员列表|个人页面|页面入口|教育背景|教育经历|学习经历|工作经历|代表性|科研项目|论文|联系方式|电子邮箱|招生信息|个人简介|简介】|学术荣誉|荣誉与奖励|国家自然科学基金|国家重点研发|基金|项目|课题|面上项目|青年项|优秀青年|新世纪优秀人才|入选|支持计划|获授权|获奖|奖励|院士|获得.*学位|^\d{4}年|至今|社会兼职|学术兼职|同专业|开授课程|委员会|大学|相关成果|发表|期刊|会议|高被引|被引|SCI|ESI|Nature|Cancer Research|Medical Image Analysis|NeuroImage|Human Brain Mapping|IEEE|MICCAI|CVPR|IPMI/i;
+const SUMMARY_FORBIDDEN_RE = /教育背景|教育经历|学习经历|工作经历|社会兼职|学术兼职|联系方式|电子邮箱|开授课程|同专业|获得.*学位|博士学位|大学本科|委员会|优秀教师奖|优秀青年|新世纪优秀人才|入选.*人才|支持计划|获奖|奖励|代表性论文|近五年代表性论著|获授权|高被引|国家自然科学基金|国家重点研发|科研项目|项目负责人|基金|项目|课题|发表|期刊|会议|审稿人|SCI|ESI|IEEE/i;
+const DIRECTION_FORBIDDEN_RE = /师资索引|教师索引|人员列表|个人页面|页面入口|教育背景|教育经历|学习经历|工作经历|代表性|科研项目|论文|联系方式|电子邮箱|招生信息|个人简介|简介】|学术荣誉|荣誉与奖励|国家自然科学基金|国家重点研发|基金|项目|课题|面上项目|青年项|优秀青年|新世纪优秀人才|入选|支持计划|获授权|获奖|奖励|院士|获得.*学位|^\d{4}年|至今|社会兼职|学术兼职|同专业|开授课程|委员会|大学|相关成果|发表|期刊|会议|高被引|被引|审稿人|实验室|Nature|Cancer Research|Medical Image Analysis|NeuroImage|Human Brain Mapping|IEEE|MICCAI|CVPR|IPMI/i;
+const SECTION_LABEL_RE = /^(?:【)?(研究领域与方向|研究方向简介|研究方向|研究领域|主要研究方向|主要研究领域|研究兴趣|个人简介)(?:】)?[:：]?$/;
+const GENERIC_EMAIL_RE = /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b/g;
 const LOCAL_FALLBACKS = {
   "bme-teachers.html": ".codex-bme-teachers.html",
   "bme-phd-2026.html": ".codex-bme-phd2026.html",
@@ -106,31 +110,48 @@ async function ensureDir() {
 async function readUrl(url, cacheName, timeoutMs = INDEX_TIMEOUT_MS) {
   await ensureDir();
   const cachePath = path.join(CACHE_DIR, cacheName);
-  try {
-    return await fs.readFile(cachePath, "utf8");
-  } catch {
-    const localFallback = LOCAL_FALLBACKS[cacheName];
-    if (localFallback) {
-      try {
-        const html = await fs.readFile(path.join(ROOT, localFallback), "utf8");
-        await fs.writeFile(cachePath, html, "utf8");
-        return html;
-      } catch {
-        // Fall through to network.
-      }
-    }
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), timeoutMs);
+  if (!REFRESH_CACHE) {
     try {
-      const response = await fetch(url, { signal: controller.signal });
-      if (!response.ok) throw new Error(`Failed to fetch ${url}: ${response.status}`);
-      const buffer = Buffer.from(await response.arrayBuffer());
-      const html = decodeHtml(buffer);
+      return await fs.readFile(cachePath, "utf8");
+    } catch {
+      // Fall through.
+    }
+  }
+  const localFallback = LOCAL_FALLBACKS[cacheName];
+  if (localFallback && !REFRESH_CACHE) {
+    try {
+      const html = await fs.readFile(path.join(ROOT, localFallback), "utf8");
       await fs.writeFile(cachePath, html, "utf8");
       return html;
-    } finally {
-      clearTimeout(timeout);
+    } catch {
+      // Fall through to network.
     }
+  }
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const response = await fetch(url, { signal: controller.signal });
+    if (!response.ok) throw new Error(`Failed to fetch ${url}: ${response.status}`);
+    const buffer = Buffer.from(await response.arrayBuffer());
+    const html = decodeHtml(buffer);
+    await fs.writeFile(cachePath, html, "utf8");
+    return html;
+  } catch (error) {
+    if (REFRESH_CACHE) {
+      try {
+        return await fs.readFile(cachePath, "utf8");
+      } catch {
+        // Fall through.
+      }
+    }
+    if (localFallback) {
+      const html = await fs.readFile(path.join(ROOT, localFallback), "utf8");
+      await fs.writeFile(cachePath, html, "utf8");
+      return html;
+    }
+    throw error;
+  } finally {
+    clearTimeout(timeout);
   }
 }
 
@@ -197,10 +218,28 @@ function decodeHtml(buffer) {
   return utf8;
 }
 
+function normalizeEmail(email) {
+  return String(email ?? "").trim().replace(/^mailto:/i, "").toLowerCase();
+}
+
+function getEmailPriority(email) {
+  if (/^[A-Za-z0-9._%+-]+@buaa\.edu\.cn$/i.test(email)) return 0;
+  if (/^[A-Za-z0-9._%+-]+@(126|163|qq|hotmail|outlook|foxmail)\.com$/i.test(email)) return 1;
+  return 2;
+}
+
 function getEmail(text) {
-  const emails = [...text.matchAll(/[A-Za-z0-9._%+-]+@buaa\.edu\.cn/gi)]
-    .map((match) => match[0])
-    .filter((email) => !/^bme@/i.test(email) && !/^bhygjc@/i.test(email));
+  const emails = uniqueItems(
+    [...String(text ?? "").matchAll(GENERIC_EMAIL_RE)]
+      .map((match) => normalizeEmail(match[0]))
+      .filter((email) =>
+        email &&
+        !/^bme@/i.test(email) &&
+        !/^bhygjc@/i.test(email) &&
+        !/^postmaster@/i.test(email) &&
+        !/^webmaster@/i.test(email),
+      ),
+  ).sort((a, b) => getEmailPriority(a) - getEmailPriority(b));
   return emails[0];
 }
 
@@ -220,6 +259,8 @@ function cleanTag(tag) {
   if (!text) return undefined;
   if (text === "硕士生导师" || text === "博士生导师" || text === "兼职导师") return text;
   if (DIRECTION_FORBIDDEN_RE.test(text) || SUMMARY_FORBIDDEN_RE.test(text)) return undefined;
+  if (/[。；;：:]/.test(text)) return undefined;
+  if (/奖|审稿人|实验室|主要方向|研究内容|研究主要包括|前沿突破/.test(text)) return undefined;
   if (text.length > 42) return undefined;
   return text;
 }
@@ -241,13 +282,21 @@ function normalizeShiProfileUrl(url) {
   return homeMatch ? `${homeMatch[1]}.htm` : httpsUrl;
 }
 
+function findShiProfileUrl(text) {
+  return normalizeShiProfileUrl(
+    String(text ?? "").match(/https?:\/\/shi\.buaa\.edu\.cn\/[A-Za-z0-9._%/-]+\/zh_CN\/index\.htm/i)?.[0],
+  );
+}
+
 function getCleanResearchSummary(value) {
   const summary = cleanText(value)
+    .replace(/^[】\]\s]+/, "")
     .replace(/^【?(研究方向|研究领域|招生方向|主要研究方向|科研方向|教育背景)】?[:：]?/, "")
     .replace(/^(近年来)?(研究)?(主要)?(聚焦于|集中于|主要包括|包括|围绕|主要从事)/, "")
     .trim()
     .slice(0, 220);
   if (!summary || summary.length < 12) return undefined;
+  if (!/[\u4e00-\u9fa5]/.test(summary)) return undefined;
   if (/@buaa\.edu\.cn|E-?Mail|电子邮箱|联系方式/i.test(summary)) return undefined;
   if (/^[等及、，。；\s]+项目/.test(summary)) return undefined;
   if (/[\u4e00-\u9fa5]{2,4}\s*(教授|副教授|讲师|研究员|副研究员|硕导|博导)/.test(summary)) return undefined;
@@ -293,7 +342,12 @@ function splitDirectionText(value) {
 function cleanDirectionItem(value) {
   const rawItem = cleanText(value);
   if (/^(通过|利用|结合|解析|探索|开展|加强|重点|针对|研发|实现|提升|研究制定|协同|对人体|在全基因组|本实验室|基于|常用|上述|这些|为制定|制定|催生|推动|参与|担任|聚焦于|将)/.test(rawItem)) return undefined;
+  if (/var\s+_tsites|ImageScale|点赞|学生信息|访客|点击次数|发布时间/i.test(rawItem)) return undefined;
+  if (/近\d+年承担|近五年承担/.test(rawItem)) return undefined;
+  if (/获.*奖|竞赛|专著|教程|经费|万元|在研|主持人?|科技进步|挑战杯|擂主|揭榜挂帅|第一完成人|出版|审稿人/i.test(rawItem)) return undefined;
   const item = rawItem
+    .replace(/^Ø+\s*/, "")
+    .replace(/^[•·▪◦]\s*/, "")
     .replace(/^[】\]）),，、.。．\s]+|[,，、\s.。…]+$/g, "")
     .replace(/^[：:]\s*/, "")
     .replace(/^\[\d+\]\s*/, "")
@@ -313,6 +367,7 @@ function cleanDirectionItem(value) {
     .replace(/的教学科研工作$/, "")
     .replace(/^课题组聚焦/, "")
     .replace(/^围绕/, "")
+    .replace(/：.*$/, "")
     .replace(/^立足学科交叉.*$/, "")
     .replace(/\s+(?:开展|研发|研究|加强|重点|针对|集中|主要|通过|利用|结合|解析|探索|服务|担任).*$/, "")
     .replace(/^(并)?(探索|解析|开展|研究|开发|研发)/, "")
@@ -320,6 +375,8 @@ function cleanDirectionItem(value) {
   if (item.length < 4 || item.length > 52) return undefined;
   if (!/[\u4e00-\u9fa5]/.test(item)) return undefined;
   if (DIRECTION_FORBIDDEN_RE.test(item)) return undefined;
+  if (/作为|欢迎|访客|点击|发布时间|学生信息/.test(item)) return undefined;
+  if (/以下[一二三四五六七八九十\d]+方面|^\d{4}[\/-]\d{2}/.test(item)) return undefined;
   if (/^(在|以在|建有|结合|解决|开展跨尺度|另一主要方向|清华)/.test(item)) return undefined;
   if (/(其他|能够替代)$/.test(item)) return undefined;
   if (/^(包括|具体包括|主要从事|主持|承担|立足学科交叉|主持在研多项)$/.test(item)) return undefined;
@@ -340,8 +397,8 @@ function getResearchSummary(text) {
   const normalized = cleanText(text);
   const sections = [
     /(?:【研究方向】|研究方向[:：]?|主要研究方向[:：]?|招生方向[:：]?)(.{16,220}?)(?:【|教育背景|工作经历|代表性|科研项目|论文|联系方式|$)/,
-    /【研究领域】(.{16,220}?)(?:【|$)/,
-    /研究领域[:：]?(.{16,220}?)(?:【|教育背景|工作经历|代表性|科研项目|论文|$)/,
+    /【研究领域】(.{16,220}?)(?:【|代表性|科研项目|项目|课题|论文|$)/,
+    /(?:研究领域与方向|主要研究领域|研究领域)[:：]?(.{16,220}?)(?:【|教育背景|工作经历|代表性|科研项目|项目|课题|论文|$)/,
     /主要从事(.{12,220}?)(?:的研究|研究工作|领域|技术研究|$)/,
   ];
   for (const section of sections) {
@@ -354,7 +411,7 @@ function getResearchSummary(text) {
 
 function getResearchDirections(text) {
   const normalized = cleanSectionText(text);
-  const endMarkers = "【|教育背景|工作经历|个人简介|简介|学术荣誉|荣誉与奖励|代表性|科研项目|论文|联系方式";
+  const endMarkers = "【|教育背景|工作经历|个人简介|简介|学术荣誉|荣誉与奖励|代表性|科研项目|项目|课题|论文|联系方式";
   const sections = [
     new RegExp(`(?:【研究方向】|研究方向[:：]?|主要研究方向[:：]?|招生方向[:：]?)([\\s\\S]{8,1200}?)(?:${endMarkers}|$)`),
     new RegExp(`(?:【研究领域】|研究领域与方向|主要研究领域[:：]?|研究领域[:：]?|研究兴趣[:：]?)([\\s\\S]{8,1200}?)(?:${endMarkers}|$)`),
@@ -365,6 +422,185 @@ function getResearchDirections(text) {
     if (directions.length) return directions;
   }
   return [];
+}
+
+function getStructuredSections($) {
+  const blocks = $("body").find("h1,h2,h3,h4,h5,h6,p,li,div").toArray();
+  const sections = [];
+
+  for (let index = 0; index < blocks.length; index += 1) {
+    const currentText = cleanText($(blocks[index]).text());
+    const labelMatch = currentText.match(SECTION_LABEL_RE);
+    if (!labelMatch) continue;
+
+    const label = labelMatch[1];
+    const content = [];
+    const seen = new Set();
+
+    for (let nextIndex = index + 1; nextIndex < blocks.length; nextIndex += 1) {
+      const nextText = cleanText($(blocks[nextIndex]).text());
+      if (!nextText) continue;
+      if (SECTION_LABEL_RE.test(nextText)) break;
+      if (nextText === currentText || seen.has(nextText)) continue;
+      seen.add(nextText);
+      content.push(nextText);
+      if (content.length >= 8) break;
+    }
+
+    sections.push({ label, content });
+  }
+
+  return sections;
+}
+
+function getSectionDirections($) {
+  const sections = getStructuredSections($)
+    .filter((section) => /研究方向|研究领域|研究兴趣/.test(section.label));
+  for (const section of sections) {
+    const focusedEntries = section.content.slice(0, section.label.includes("简介") ? 3 : 2);
+    const directItems = cleanDirectionItems(
+      focusedEntries.flatMap((entry) => splitDirectionText(entry)),
+    );
+    if (directItems.length) return directItems;
+
+    const compactItems = cleanDirectionItems(
+      focusedEntries
+        .filter((entry) => entry.length <= 120)
+        .flatMap((entry) => entry.split(/[;；、，,\n]/)),
+    );
+    if (compactItems.length) return compactItems;
+  }
+
+  return [];
+}
+
+function getSectionSummary($) {
+  const sections = getStructuredSections($);
+  const preferred = [
+    ...sections.filter((section) => /研究方向简介|研究方向|研究领域|研究兴趣/.test(section.label)),
+    ...sections.filter((section) => section.label === "个人简介"),
+  ];
+
+  for (const section of preferred) {
+    for (const entry of section.content) {
+      const summary = getCleanResearchSummary(entry);
+      if (summary) return summary;
+    }
+  }
+
+  return undefined;
+}
+
+function getShiHomePanels($, baseUrl) {
+  const tabs = $(".TabbedPanelsTab").toArray().map((el) => cleanText($(el).text()));
+  const panels = $(".TabbedPanelsContentGroup > .TabbedPanelsContent").toArray();
+  if (!tabs.length || !panels.length) return [];
+
+  return tabs.map((label, index) => {
+    const panel = panels[index];
+    const root = panel ? $(panel) : null;
+    const texts = uniqueItems(
+      (root ? root.find("a,div,p,li,span").toArray() : [])
+        .map((el) => cleanText($(el).text()))
+        .filter((text) => text && text !== label),
+    );
+    const links = root
+      ? root.find("a[href]").toArray()
+        .map((el) => ({
+          text: cleanText($(el).text()),
+          url: normalizeUrl($(el).attr("href"), baseUrl),
+        }))
+        .filter((item) => item.text && item.url)
+      : [];
+
+    return {
+      label,
+      texts,
+      links,
+    };
+  });
+}
+
+function getShiHomePanelDirections($, baseUrl) {
+  const sections = getShiHomePanels($, baseUrl)
+    .filter((section) => /研究方向|研究领域/.test(section.label));
+  if (!sections.length) return [];
+
+  const linkedDirections = cleanDirectionItems(
+    sections.flatMap((section) => section.links.map((item) => item.text)),
+  );
+  if (linkedDirections.length) return linkedDirections;
+
+  return cleanDirectionItems(
+    sections.flatMap((section) => section.texts.flatMap((text) => splitDirectionText(text))),
+  );
+}
+
+function getShiHomePanelSummary($, baseUrl) {
+  const sections = getShiHomePanels($, baseUrl);
+  const preferred = [
+    ...sections.filter((section) => /个人简介/.test(section.label)),
+    ...sections.filter((section) => /研究方向|研究领域/.test(section.label)),
+  ];
+
+  for (const section of preferred) {
+    for (const text of section.texts) {
+      const summary = getCleanResearchSummary(text);
+      if (summary) return summary;
+    }
+  }
+
+  return undefined;
+}
+
+function getTsiteViewMode(html) {
+  return html.match(/_tsites_com_view_mode_type_\s*=\s*(\d+)/)?.[1] ?? "8";
+}
+
+async function decryptTsiteEmail($, pageUrl, html) {
+  const fields = $('span[_tsites_encrypt_field="_tsites_encrypt_field"]').toArray()
+    .map((el) => ({
+      id: $(el).attr("id"),
+      content: cleanText($(el).text()),
+    }))
+    .filter((field) => field.id && field.content);
+  if (!fields.length) return undefined;
+
+  const mode = getTsiteViewMode(html);
+  const endpoint = new URL(TSITES_ENCRYPT_PATH, pageUrl);
+  const decoded = await Promise.all(fields.map(async ({ id, content }) => {
+    try {
+      const url = new URL(endpoint);
+      url.searchParams.set("id", id);
+      url.searchParams.set("content", content);
+      url.searchParams.set("mode", mode);
+      const response = await fetch(url);
+      if (!response.ok) return undefined;
+      const data = await response.json();
+      return data?.content;
+    } catch {
+      return undefined;
+    }
+  }));
+
+  return getEmail(decoded.join(" "));
+}
+
+function pickSharedTeacherFallbacks(details, names) {
+  return Object.fromEntries(
+    Object.entries(details)
+      .filter(([name]) => names.has(name))
+      .map(([name, detail]) => [
+        name,
+        {
+          title: detail.title,
+          email: detail.email,
+          teacherHomeUrl: detail.teacherHomeUrl,
+          profileUrl: detail.teacherHomeUrl ?? detail.profileUrl,
+          tags: getAdvisorTags((detail.tags ?? []).join(" ")),
+        },
+      ]),
+  );
 }
 
 function parseBmeTeacherIndex(html) {
@@ -588,9 +824,8 @@ function parseProfilePage(html, url, fallback = {}) {
   const $ = cheerio.load(html, { decodeEntities: true });
   const rawText = getStructuredBodyText($);
   const text = cleanText(rawText);
-  const foundTeacherHome = normalizeShiProfileUrl(
-    text.match(/https?:\/\/shi\.buaa\.edu\.cn\/[^\s电子邮箱【]+/)?.[0],
-  );
+  const metaDescription = cleanText($('meta[name="description"]').attr("content") ?? "");
+  const foundTeacherHome = findShiProfileUrl(`${metaDescription} ${text}`);
   const officialUrl = firstValue(
     isSchoolOfficialUrl(fallback.officialUrl) ? fallback.officialUrl : undefined,
     isSchoolOfficialUrl(url) ? url : undefined,
@@ -605,22 +840,53 @@ function parseProfilePage(html, url, fallback = {}) {
     isShiTeacherHome(fallback.profileUrl) ? fallback.profileUrl : undefined,
   );
   const profileUrl = officialUrl ?? fallback.profileUrl ?? teacherHomeUrl ?? url;
-  const directions = getResearchDirections(rawText);
+  const directions = cleanDirectionItems([
+    ...getResearchDirections(rawText),
+    ...getSectionDirections($),
+  ]);
   const fallbackDirections = fallback.directions?.length
     ? fallback.directions
     : splitDirectionText(fallback.researchSummary);
-  const researchSummary = getResearchSummary(text) ?? getCleanResearchSummary(fallback.researchSummary);
+  const researchSummary = firstValue(
+    getResearchSummary(text),
+    getSectionSummary($),
+    getCleanResearchSummary(fallback.researchSummary),
+  );
   return {
     ...fallback,
     officialUrl,
     teacherHomeUrl,
     profileUrl,
     sourceUrl: officialUrl ?? fallback.sourceUrl ?? url,
-    title: getTitle(text, fallback.title),
-    email: getEmail(text) ?? fallback.email,
+    title: getTitle(`${metaDescription} ${text}`, fallback.title),
+    email: getEmail(`${metaDescription} ${text}`) ?? fallback.email,
     tags: Array.from(new Set([...(fallback.tags ?? []), ...getAdvisorTags(text)])),
     directions: directions.length ? directions : fallbackDirections,
     researchSummary,
+  };
+}
+
+async function parseProfilePageAsync(html, url, fallback = {}) {
+  const parsed = parseProfilePage(html, url, fallback);
+  if (!isShiTeacherHome(url)) return parsed;
+
+  const $ = cheerio.load(html, { decodeEntities: true });
+  const panelDirections = getShiHomePanelDirections($, url);
+  const panelSummary = getShiHomePanelSummary($, url);
+  const decodedEmail = parsed.email ? undefined : await decryptTsiteEmail($, url, html);
+
+  return {
+    ...parsed,
+    teacherHomeUrl: parsed.teacherHomeUrl ?? normalizeShiProfileUrl(url),
+    email: parsed.email ?? decodedEmail,
+    directions: panelDirections.length
+      ? cleanDirectionItems(panelDirections)
+      : cleanDirectionItems(parsed.directions ?? []),
+    researchSummary: firstValue(
+      panelSummary,
+      getCleanResearchSummary(parsed.researchSummary),
+      getSectionSummary($),
+    ),
   };
 }
 
@@ -646,7 +912,7 @@ function parseMseListLikePage(html, baseUrl) {
     const name = cleanName(anchor.text());
     if (!name) return;
     const text = cleanText($(el).text());
-    const profileUrl = normalizeShiProfileUrl(text.match(/https?:\/\/shi\.buaa\.edu\.cn\/[^\s电子邮箱【]+/)?.[0]);
+    const profileUrl = findShiProfileUrl(text);
     const sourceUrl = normalizeUrl(anchor.attr("href"), baseUrl);
     details[name] = {
       ...(details[name] ?? {}),
@@ -814,7 +1080,7 @@ async function enrichProfiles(details, schoolKey) {
         const html = cacheName
           ? await fs.readFile(path.join(CACHE_DIR, cacheName), "utf8")
           : await readUrl(url, requestedCacheName, PROFILE_TIMEOUT_MS);
-        return [name, parseProfilePage(html, url, detail)];
+        return [name, await parseProfilePageAsync(html, url, detail)];
       } catch {
         return [name, detail];
       }
@@ -836,7 +1102,7 @@ async function getMseOfficialDetails(mseProfiles) {
         : { teacherHomeUrl: normalizeShiProfileUrl(url), profileUrl: normalizeShiProfileUrl(url), sourceUrl: url, tags: [] };
       const html = await readOptionalUrl(url, cacheNameFor(url, isSchoolOfficialUrl(url) ? "mse-official" : "mse", name), PROFILE_TIMEOUT_MS);
       if (!html) return [name, fallback];
-      const parsed = parseProfilePage(html, url, fallback);
+      const parsed = await parseProfilePageAsync(html, url, fallback);
       return [name, parsed];
     }));
     for (const [name, detail] of results) details[name] = detail;
@@ -868,6 +1134,7 @@ function addDirectionTags(details) {
 async function main() {
   const existing = await loadExistingDetails();
   const targetNames = getTargetNames(await fs.readFile(APP_SOURCE, "utf8"));
+  const bmeFallbacksForMse = pickSharedTeacherFallbacks(existing.bme ?? {}, targetNames.mse);
 
   const [
     bmeTeacherHtml,
@@ -902,7 +1169,7 @@ async function main() {
   );
   const baseBmeDetails = pickNames(mergeDetails(existing.bme ?? {}, shiTeachers, bmeTeachers, admissions), targetNames.bme);
   const baseMseDetails = pickNames(
-    mergeDetails(existing.mse ?? {}, shiTeachers, msePeopleDetails, mseDetails, mseOfficialDetails, admissions),
+    mergeDetails(existing.mse ?? {}, bmeFallbacksForMse, shiTeachers, msePeopleDetails, mseDetails, mseOfficialDetails, admissions),
     targetNames.mse,
   );
   const shiSearchTeachers = await getShiSearchDetails(new Set([
