@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState, useCallback, memo } from "react";
 import {
   AlertTriangle,
   ArrowUpRight,
@@ -20,9 +20,14 @@ import {
   SlidersHorizontal,
   UserRound,
   Users,
+  Dices,
+  Sparkles,
+  Network
 } from "lucide-react";
 import { supervisorDetails } from "./supervisorDetails";
 import { communityNotes } from "./communityNotes";
+import { TopicGalaxy } from "./TopicGalaxy";
+import { MatchQuiz } from "./MatchQuiz";
 
 const BME_SOURCE_URL = "https://bme.buaa.edu.cn/zhaopinHr.aspx?catID=9&curID=713&subcatID=40";
 const BME_TEACHERS_URL = "https://bme.buaa.edu.cn/teachers.aspx?catID=7";
@@ -1271,7 +1276,7 @@ function PendingReviewPanel({ pendingSubmissions, onClearPending }) {
   );
 }
 
-function SupervisorCard({ item, expanded, onToggle, pendingCount, onSubmitNote }) {
+const SupervisorCard = memo(function SupervisorCard({ item, expanded, onToggle, pendingCount, onSubmitNote }) {
   const directions = getDirectionItems(item);
   const evidence = getEvidenceSummary(item);
   const progress = `${(evidence.count / evidence.total) * 100}%`;
@@ -1281,7 +1286,7 @@ function SupervisorCard({ item, expanded, onToggle, pendingCount, onSubmitNote }
 
   return (
     <article className="supervisor-card">
-      <button type="button" className="supervisor-card__summary" onClick={onToggle} aria-expanded={expanded}>
+      <button type="button" className="supervisor-card__summary" onClick={() => onToggle(item.id)} aria-expanded={expanded}>
         <div className="supervisor-card__identity">
           <div className="avatar" aria-hidden="true">{item.name.slice(0, 1)}</div>
           <div className="supervisor-card__main">
@@ -1319,7 +1324,8 @@ function SupervisorCard({ item, expanded, onToggle, pendingCount, onSubmitNote }
         {directions.length > 5 && <Chip tone="outline">+{directions.length - 5} 个方向</Chip>}
       </div>
 
-      {expanded && (
+      <div className={`supervisor-card__expand-wrapper${expanded ? ' supervisor-card__expand-wrapper--open' : ''}`}>
+        <div className="supervisor-card__expand-inner">
         <div className="supervisor-card__detail">
           <div className="detail-grid">
             <div className="detail-panel">
@@ -1436,12 +1442,13 @@ function SupervisorCard({ item, expanded, onToggle, pendingCount, onSubmitNote }
             </a>
           </div>
         </div>
-      )}
+        </div>
+      </div>
     </article>
   );
-}
+});
 
-function DirectionCard({ area }) {
+function DirectionCard({ area, style, onOpenMentor }) {
   const parsedMentors = area.mentors.map(parseMentor);
   const partTimeCount = parsedMentors.filter((mentor) => mentor.partTime).length;
   const badges = area.badges ?? [
@@ -1450,7 +1457,7 @@ function DirectionCard({ area }) {
   ];
 
   return (
-    <article className="direction-card">
+    <article className="direction-card" style={style}>
       <div className="direction-card__header">
         <div>
           <span>{area.group}</span>
@@ -1467,9 +1474,9 @@ function DirectionCard({ area }) {
       {area.description && <p className="direction-card__note">{area.description}</p>}
       <div className="mentor-cloud">
         {parsedMentors.map(({ name, partTime }) => (
-          <span key={`${area.code}-${name}`} className={partTime ? "mentor-pill mentor-pill--part-time" : "mentor-pill"}>
+          <button type="button" key={`${area.code}-${name}`} className={partTime ? "mentor-pill mentor-pill--part-time" : "mentor-pill"} onClick={() => onOpenMentor && onOpenMentor(name)}>
             {name}{partTime ? " · 兼职" : ""}
-          </span>
+          </button>
         ))}
       </div>
     </article>
@@ -1950,6 +1957,9 @@ export default function App() {
   const [mentorLabView, setMentorLabView] = useState("all");
   const [mentorLabMessage, setMentorLabMessage] = useState("");
 
+  const tabsRef = useRef(null);
+  const [indicatorStyle, setIndicatorStyle] = useState({});
+
   useEffect(() => {
     writeLocalJson(MENTOR_LAB_PROFILE_KEY, mentorLabProfile);
   }, [mentorLabProfile]);
@@ -1961,6 +1971,19 @@ export default function App() {
   useEffect(() => {
     writeLocalJson(MENTOR_LAB_SHORTLIST_KEY, mentorShortlist);
   }, [mentorShortlist]);
+
+  useEffect(() => {
+    const tabsEl = tabsRef.current;
+    if (!tabsEl) return;
+    const activeEl = tabsEl.querySelector('.tab--active');
+    if (!activeEl) return;
+    const tabsRect = tabsEl.getBoundingClientRect();
+    const activeRect = activeEl.getBoundingClientRect();
+    setIndicatorStyle({
+      left: activeRect.left - tabsRect.left + tabsEl.scrollLeft,
+      width: activeRect.width,
+    });
+  }, [activeTab]);
 
   function handleSubmitNote(item, form) {
     const submission = {
@@ -2036,6 +2059,36 @@ export default function App() {
     setCatFilter("全部");
     setSearchQ(item.name);
     setExpanded(item.id);
+  }
+
+  function handleOpenMentorByName(name) {
+    const item = supervisors.find(m => m.name === name);
+    if (item) {
+      handleOpenMentorFromLab(item);
+    }
+  }
+
+  const handleToggleExpand = useCallback((id) => {
+    setExpanded((current) => current === id ? null : id);
+  }, []);
+
+  const [isRandomizing, setIsRandomizing] = useState(false);
+
+  function handleRandomBlindBox() {
+    if (isRandomizing) return;
+    setIsRandomizing(true);
+    let ticks = 0;
+    const maxTicks = 15;
+    const interval = setInterval(() => {
+      const rIdx = Math.floor(Math.random() * supervisors.length);
+      setSearchQ(supervisors[rIdx].name);
+      ticks++;
+      if (ticks >= maxTicks) {
+        clearInterval(interval);
+        setIsRandomizing(false);
+        handleOpenMentorFromLab(supervisors[rIdx]);
+      }
+    }, 60);
   }
 
   const stats = useMemo(() => {
@@ -2145,6 +2198,8 @@ export default function App() {
 
   const tabs = [
     { id: "database", label: "导师索引", icon: Search },
+    { id: "topic-galaxy", label: "星云图谱", icon: Network },
+    { id: "match-quiz", label: "匹配测试", icon: Sparkles },
     { id: "mentor-lab", label: "择导实验室", icon: BarChart3 },
     { id: "directions", label: "培养方向", icon: GraduationCap },
     { id: "sources", label: "来源与建议", icon: LinkIcon },
@@ -2189,7 +2244,13 @@ export default function App() {
         ))}
       </section>
 
-      <nav className="tabs" aria-label="页面导航">
+      <nav className="tabs" aria-label="页面导航" ref={tabsRef}>
+        {indicatorStyle.width > 0 && (
+          <span
+            className="tabs__indicator"
+            style={{ left: indicatorStyle.left, width: indicatorStyle.width }}
+          />
+        )}
         {tabs.map(({ id, label, icon: Icon }) => (
           <button
             key={id}
@@ -2213,7 +2274,12 @@ export default function App() {
                 <Filter aria-hidden="true" />
                 <span>快速筛选</span>
               </div>
-              <p>当前筛选结果：{filtered.length} 条</p>
+              <div style={{display: "flex", gap: "12px", alignItems: "center"}}>
+                <button className="link-button" onClick={handleRandomBlindBox} disabled={isRandomizing} style={{color: "var(--blue)", fontWeight: 600}}>
+                  <Dices size={18} /> 缘分摇一摇
+                </button>
+                <p>当前筛选结果：{filtered.length} 条</p>
+              </div>
             </div>
             <div className="filter-grid">
               <label className="field field--search">
@@ -2248,7 +2314,7 @@ export default function App() {
                 key={item.id}
                 item={item}
                 expanded={expanded === item.id}
-                onToggle={() => setExpanded(expanded === item.id ? null : item.id)}
+                onToggle={handleToggleExpand}
                 pendingCount={pendingSubmissions.filter((entry) => getPendingKey(item) === `${entry.schoolKey}:${entry.teacherName}`).length}
                 onSubmitNote={handleSubmitNote}
               />
@@ -2295,7 +2361,7 @@ export default function App() {
               <Chip tone="green">官方培养方向</Chip>
             </div>
             <div className="direction-grid">
-              {bmeDirections.map((area) => <DirectionCard key={`${area.group}-${area.code}`} area={area} />)}
+              {bmeDirections.map((area, index) => <DirectionCard key={`${area.group}-${area.code}`} area={area} style={{ animationDelay: `${index * 0.06}s` }} onOpenMentor={handleOpenMentorByName} />)}
             </div>
           </div>
 
@@ -2312,10 +2378,18 @@ export default function App() {
               </div>
             </div>
             <div className="direction-grid">
-              {mseDirectionAreas.map((area) => <DirectionCard key={`${area.group}-${area.code}`} area={area} />)}
+              {mseDirectionAreas.map((area, index) => <DirectionCard key={`${area.group}-${area.code}`} area={area} style={{ animationDelay: `${index * 0.06}s` }} onOpenMentor={handleOpenMentorByName} />)}
             </div>
           </div>
         </section>
+      )}
+
+      {activeTab === "topic-galaxy" && (
+        <TopicGalaxy supervisors={supervisors} onOpenMentor={handleOpenMentorFromLab} />
+      )}
+
+      {activeTab === "match-quiz" && (
+        <MatchQuiz supervisors={supervisors} onOpenMentor={handleOpenMentorFromLab} />
       )}
 
       {activeTab === "sources" && (
@@ -2327,8 +2401,8 @@ export default function App() {
           <PendingReviewPanel pendingSubmissions={pendingSubmissions} onClearPending={handleClearPending} />
 
           <div className="source-grid">
-            {sourceCards.map((source) => (
-              <a key={source.url} className="source-card" href={source.url} target="_blank" rel="noreferrer">
+            {sourceCards.map((source, index) => (
+              <a key={source.url} className="source-card" href={source.url} target="_blank" rel="noreferrer" style={{ animationDelay: `${index * 0.05}s` }}>
                 <div>
                   <LinkIcon aria-hidden="true" />
                   <h3>{source.title}</h3>

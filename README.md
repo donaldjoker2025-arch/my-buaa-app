@@ -20,6 +20,13 @@
 * 支持按姓名、学院、方向分类、邮箱和关键词检索
 * 每位导师提供方向标签、联系方式状态、硕导/博导标签、资料完整度和来源入口
 
+### 匹配测试（v0.2.0 内测版）
+
+* 首创 BMETI 生医工科研性格测验，通过纯正“黑话”测验计算科研八字
+* 将导师的官方标签与用户测试结果进行 28 种专业分类（如“人工智能×空天医学”）下的模糊相似度匹配
+* 推荐 6 位天选导师（SSR/SR/S/A 分级），拒绝同质化推荐，探索跨学科组合
+* 本地持久化缓存测试结果，防止进度丢失
+
 ### 择导实验室
 
 * 支持基于 `topicTags` 和官方方向词做兴趣画像
@@ -171,14 +178,14 @@ git push origin main
 如果某一版你希望长期保留归档，推荐这样做：
 
 ```bash
-git tag release-v0.1.1
-git push origin release-v0.1.1
+git tag release-v0.2.0
+git push origin release-v0.2.0
 ```
 
 推送这个 tag 后，GitHub Actions 会自动把这一版发布到：
 
 ```text
-https://donaldjoker2025-arch.github.io/my-buaa-app/releases/release-v0.1.1/
+https://donaldjoker2025-arch.github.io/my-buaa-app/releases/release-v0.2.0/
 ```
 
 ### 手动发布作为兜底
