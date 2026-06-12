@@ -2051,13 +2051,15 @@ const WeeklyVisitsChart = memo(() => {
   // Create SVG points
   // Width: 200px, Height: 100px. Margin 10px.
   const chartWidth = 200;
-  const chartHeight = 80;
+  const chartHeight = 65; // Reduced slightly to make room for labels
   
   const points = data.map((d, index) => {
-    const x = data.length === 1 ? chartWidth / 2 : (index / (data.length - 1)) * chartWidth;
+    const x = (index / 6) * chartWidth; // Fixed 7-day grid
     const y = chartHeight - (d.visits / (maxVisits * 1.2)) * chartHeight;
     return `${x},${y}`;
   }).join(" ");
+
+  const daysLabels = ["一", "二", "三", "四", "五", "六", "日"];
 
   return (
     <div className="hero-visual chart-card" aria-label="本周访问量">
@@ -2069,7 +2071,7 @@ const WeeklyVisitsChart = memo(() => {
       <p style={{ margin: 0, opacity: 0.8 }}>今日访问量 (模拟)</p>
       
       <div style={{ flex: 1, marginTop: "12px", position: "relative" }}>
-        <svg width="100%" height="100%" viewBox={`0 0 ${chartWidth} ${chartHeight}`} preserveAspectRatio="none" style={{ overflow: "visible" }}>
+        <svg width="100%" height="100%" viewBox={`0 -5 ${chartWidth} ${chartHeight + 20}`} preserveAspectRatio="none" style={{ overflow: "visible" }}>
           <polyline 
             points={points} 
             fill="none" 
@@ -2080,10 +2082,19 @@ const WeeklyVisitsChart = memo(() => {
             className="chart-polyline"
           />
           {data.map((d, index) => {
-            const x = data.length === 1 ? chartWidth / 2 : (index / (data.length - 1)) * chartWidth;
+            const x = (index / 6) * chartWidth;
             const y = chartHeight - (d.visits / (maxVisits * 1.2)) * chartHeight;
             return (
               <circle key={index} cx={x} cy={y} r="4" fill="#fff" stroke="#4f6ef7" strokeWidth="2" className="chart-point" style={{ animationDelay: `${0.3 + index * 0.1}s` }} />
+            );
+          })}
+          {/* Add x-axis labels */}
+          {daysLabels.map((label, index) => {
+            const x = (index / 6) * chartWidth;
+            return (
+              <text key={index} x={x} y={chartHeight + 15} fill="rgba(255,255,255,0.5)" fontSize="10" textAnchor="middle" style={{ animation: "fadeIn 0.5s 0.8s both" }}>
+                {label}
+              </text>
             );
           })}
           <defs>
