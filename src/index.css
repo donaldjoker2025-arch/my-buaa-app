@@ -232,6 +232,34 @@ svg {
   box-shadow: 0 4px 12px rgba(79, 110, 247, 0.12);
 }
 
+.sponsor-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 99px;
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 600;
+  text-decoration: none;
+  box-shadow: 0 2px 8px rgba(20, 40, 65, 0.04);
+  transition: all 0.25s var(--transition-smooth);
+  animation: fadeIn 0.5s 0.2s var(--transition-smooth) both;
+}
+
+.sponsor-pill:hover {
+  border-color: #ec4899;
+  color: #ec4899;
+  box-shadow: 0 4px 12px rgba(236, 72, 153, 0.15);
+  transform: translateY(-1px);
+}
+
+.sponsor-pill:hover .heart-icon {
+  fill: #ec4899;
+}
+
 .github-star-pill .star-icon {
   color: var(--amber);
   fill: var(--amber-soft);

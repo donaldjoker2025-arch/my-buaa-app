@@ -24,7 +24,8 @@ import {
   Sparkles,
   Network,
   Star,
-  Activity
+  Activity,
+  Heart
 } from "lucide-react";
 import { supabase } from "./lib/supabase";
 
@@ -2126,11 +2127,9 @@ const WeeklyVisitsChart = memo(() => {
       
       <div style={{ width: "100%", height: "140px", marginTop: "16px", position: "relative" }}>
         <svg 
-          width="100%" 
-          height="100%" 
           viewBox={`0 -10 ${chartWidth} ${chartHeight + 40}`} 
           preserveAspectRatio="xMidYMax meet" 
-          style={{ overflow: "visible", display: "block" }}
+          style={{ width: "100%", height: "100%", overflow: "visible", display: "block" }}
         >
           <polyline 
             points={points} 
@@ -2475,6 +2474,15 @@ export default function App() {
         <div className="hero-copy">
           <div className="hero-top-row">
             <span className="eyebrow">BUAA Biomedical Mentor Index</span>
+            <a 
+              href="https://github.com/sponsors/donaldjoker2025-arch" 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              className="sponsor-pill"
+            >
+              <Heart size={14} className="heart-icon" />
+              <span>赞助此项目</span>
+            </a>
             <a 
               href="https://github.com/donaldjoker2025-arch/my-buaa-app" 
               target="_blank" 
