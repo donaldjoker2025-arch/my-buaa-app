@@ -25,7 +25,8 @@ import {
   Network,
   Star,
   Activity,
-  Heart
+  Heart,
+  X
 } from "lucide-react";
 import { supabase } from "./lib/supabase";
 
@@ -2204,6 +2205,42 @@ const HeroVisualStacked = memo(({ count }) => {
   );
 });
 
+const SponsorModal = ({ isOpen, onClose }) => {
+  if (!isOpen) return null;
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="sponsor-modal-content" onClick={e => e.stopPropagation()}>
+        <button className="modal-close" onClick={onClose} aria-label="关闭">
+          <X size={20} />
+        </button>
+        <div className="sponsor-modal-header">
+          <div className="sponsor-icon-wrapper">
+            <Heart size={28} className="heart-icon-large" />
+          </div>
+          <h2>感谢你的支持！</h2>
+          <p>如果你觉得这个开源项目对你择导有帮助，可以请我喝杯咖啡☕️，这会是我持续维护更新的最大动力！</p>
+        </div>
+        
+        <div className="qr-codes-container">
+          <div className="qr-card wechat">
+            <div className="qr-img-wrapper">
+              <img src="./wechat-pay.jpg" alt="微信支付" onError={(e) => e.target.src = "https://via.placeholder.com/200x200?text=上传wechat-pay.jpg到public目录"} />
+            </div>
+            <span className="qr-label">微信支付</span>
+          </div>
+          <div className="qr-card alipay">
+            <div className="qr-img-wrapper">
+              <img src="./ali-pay.jpg" alt="支付宝" onError={(e) => e.target.src = "https://via.placeholder.com/200x200?text=上传ali-pay.jpg到public目录"} />
+            </div>
+            <span className="qr-label">支付宝</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 export default function App() {
   const [dbResults, setDbResults] = useState(supervisors);
   const [schoolFilter, setSchoolFilter] = useState("全部");
@@ -2211,6 +2248,7 @@ export default function App() {
   const [searchQ, setSearchQ] = useState("");
   const [expanded, setExpanded] = useState(null);
   const [activeTab, setActiveTab] = useState("database");
+  const [isSponsorModalOpen, setIsSponsorModalOpen] = useState(false);
   const [pendingSubmissions, setPendingSubmissions] = useState(() => safeReadPendingSubmissions());
   const [mentorLabProfile, setMentorLabProfile] = useState(() => safeReadMentorLabProfile());
   const [mentorCompareList, setMentorCompareList] = useState(() => safeReadMentorLabIds(MENTOR_LAB_COMPARE_KEY));
@@ -2474,15 +2512,13 @@ export default function App() {
         <div className="hero-copy">
           <div className="hero-top-row">
             <span className="eyebrow">BUAA Biomedical Mentor Index</span>
-            <a 
-              href="https://github.com/sponsors/donaldjoker2025-arch" 
-              target="_blank" 
-              rel="noopener noreferrer" 
+            <button 
+              onClick={() => setIsSponsorModalOpen(true)}
               className="sponsor-pill"
             >
               <Heart size={14} className="heart-icon" />
               <span>赞助此项目</span>
-            </a>
+            </button>
             <a 
               href="https://github.com/donaldjoker2025-arch/my-buaa-app" 
               target="_blank" 
@@ -2720,6 +2756,7 @@ export default function App() {
           </div>
         </section>
       )}
+      <SponsorModal isOpen={isSponsorModalOpen} onClose={() => setIsSponsorModalOpen(false)} />
     </main>
   );
 }
