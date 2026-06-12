@@ -2225,13 +2225,13 @@ const SponsorModal = ({ isOpen, onClose }) => {
         <div className="qr-codes-container">
           <div className="qr-card wechat">
             <div className="qr-img-wrapper">
-              <img src="./wechat-pay.jpg" alt="微信支付" onError={(e) => e.target.src = "https://via.placeholder.com/200x200?text=上传wechat-pay.jpg到public目录"} />
+              <img src="./wechat-pay.jpg?v=2" alt="微信支付" onError={(e) => e.target.src = "https://via.placeholder.com/200x200?text=上传wechat-pay.jpg到public目录"} />
             </div>
             <span className="qr-label">微信支付</span>
           </div>
           <div className="qr-card alipay">
             <div className="qr-img-wrapper">
-              <img src="./ali-pay.jpg" alt="支付宝" onError={(e) => e.target.src = "https://via.placeholder.com/200x200?text=上传ali-pay.jpg到public目录"} />
+              <img src="./ali-pay.jpg?v=2" alt="支付宝" onError={(e) => e.target.src = "https://via.placeholder.com/200x200?text=上传ali-pay.jpg到public目录"} />
             </div>
             <span className="qr-label">支付宝</span>
           </div>
