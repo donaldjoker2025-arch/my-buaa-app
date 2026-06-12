@@ -1962,20 +1962,21 @@ function MentorLabSection({
 }
 
 const FeedbackSection = memo(() => {
-  const containerRef = useRef(null);
+  const containerRef = useCallback((elem) => {
+    if (!elem) return;
+    // Check if the script is already appended to prevent duplicate iframes in React StrictMode
+    if (elem.childNodes.length > 0) return;
 
-  useEffect(() => {
-    if (containerRef.current && containerRef.current.childNodes.length === 0) {
-      const script = document.createElement("script");
-      script.src = "https://utteranc.es/client.js";
-      script.async = true;
-      script.setAttribute("repo", "donaldjoker2025-arch/my-buaa-app");
-      script.setAttribute("issue-term", "pathname");
-      script.setAttribute("label", "内测意见");
-      script.setAttribute("theme", "github-light");
-      script.setAttribute("crossorigin", "anonymous");
-      containerRef.current.appendChild(script);
-    }
+    const script = document.createElement("script");
+    script.src = "https://utteranc.es/client.js";
+    script.async = true;
+    script.crossOrigin = "anonymous";
+    script.setAttribute("repo", "donaldjoker2025-arch/my-buaa-app");
+    script.setAttribute("issue-term", "pathname");
+    script.setAttribute("label", "内测意见");
+    script.setAttribute("theme", "github-light");
+    
+    elem.appendChild(script);
   }, []);
 
   return (
