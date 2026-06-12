@@ -2103,12 +2103,12 @@ const WeeklyVisitsChart = memo(() => {
   
   // Create SVG points
   // Width: 200px, Height: 100px. Margin 10px.
-  const chartWidth = 220; // Expanded to fit padding
-  const innerWidth = 200; // The actual line width
-  const chartHeight = 60; // Chart drawing area height
+  const chartWidth = 300; 
+  const innerWidth = 270; 
+  const chartHeight = 90; 
   
   const points = data.map((d, index) => {
-    const x = 10 + (index / 6) * innerWidth; 
+    const x = 15 + (index / 6) * innerWidth; 
     const y = chartHeight - (d.visits / (maxVisits * 1.2)) * chartHeight;
     return `${x},${y}`;
   }).join(" ");
@@ -2119,34 +2119,40 @@ const WeeklyVisitsChart = memo(() => {
         <Activity aria-hidden="true" />
         <span>最近七日访问热度</span>
       </div>
-      <strong style={{ fontSize: "28px" }}>
+      <strong style={{ fontSize: "32px", marginTop: "auto" }}>
         {data.length > 0 ? data[data.length - 1].visits : "..."}
       </strong>
-      <p style={{ margin: 0, opacity: 0.8 }}>今日访问量 (实时)</p>
+      <p style={{ margin: "4px 0 0", opacity: 0.8 }}>今日实时访问量</p>
       
-      <div style={{ flex: 1, marginTop: "12px", position: "relative" }}>
-        <svg width="100%" height="100%" viewBox={`0 -10 ${chartWidth} ${chartHeight + 35}`} preserveAspectRatio="none" style={{ overflow: "visible" }}>
+      <div style={{ width: "100%", height: "140px", marginTop: "16px", position: "relative" }}>
+        <svg 
+          width="100%" 
+          height="100%" 
+          viewBox={`0 -10 ${chartWidth} ${chartHeight + 40}`} 
+          preserveAspectRatio="xMidYMax meet" 
+          style={{ overflow: "visible", display: "block" }}
+        >
           <polyline 
             points={points} 
             fill="none" 
             stroke="url(#chartGradient)" 
-            strokeWidth="3" 
+            strokeWidth="4" 
             strokeLinecap="round" 
             strokeLinejoin="round" 
             className="chart-polyline"
           />
           {data.map((d, index) => {
-            const x = 10 + (index / 6) * innerWidth;
+            const x = 15 + (index / 6) * innerWidth;
             const y = chartHeight - (d.visits / (maxVisits * 1.2)) * chartHeight;
             return (
-              <circle key={index} cx={x} cy={y} r="4" fill="#fff" stroke="#4f6ef7" strokeWidth="2" className="chart-point" style={{ animationDelay: `${0.3 + index * 0.1}s` }} />
+              <circle key={index} cx={x} cy={y} r="4.5" fill="#fff" stroke="#4f6ef7" strokeWidth="2.5" className="chart-point" style={{ animationDelay: `${0.3 + index * 0.1}s` }} />
             );
           })}
           {/* Add x-axis labels */}
           {data.map((d, index) => {
-            const x = 10 + (index / 6) * innerWidth;
+            const x = 15 + (index / 6) * innerWidth;
             return (
-              <text key={index} x={x} y={chartHeight + 22} fill="rgba(255,255,255,0.6)" fontSize="11" textAnchor="middle" style={{ animation: "fadeIn 0.5s 0.8s both" }}>
+              <text key={index} x={x} y={chartHeight + 24} fill="rgba(255,255,255,0.7)" fontSize="12" fontWeight="500" textAnchor="middle" style={{ animation: "fadeIn 0.5s 0.8s both" }}>
                 {d.day}
               </text>
             );
