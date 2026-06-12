@@ -1,0 +1,17 @@
+{
+  "fetchedAt": "2026-06-12T02:21:36.663Z",
+  "repo": "donaldjoker2025-arch/my-buaa-app",
+  "issues": [
+    {
+      "number": 1,
+      "title": "TEST",
+      "user": "donaldjoker2025-arch",
+      "state": "open",
+      "body": "##这是一条测试，无实际内容##",
+      "commentsCount": 0,
+      "labels": [],
+      "url": "https://github.com/donaldjoker2025-arch/my-buaa-app/issues/1",
+      "createdAt": "2026-06-12T02:15:01Z"
+    }
+  ]
+}

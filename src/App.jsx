@@ -26,6 +26,7 @@ import {
   Star,
   Activity
 } from "lucide-react";
+import { supabase } from "./lib/supabase";
 
 const GithubIcon = ({ size = 24, className = "" }) => (
   <svg
@@ -2012,37 +2013,85 @@ const FeedbackSection = memo(() => {
 });
 
 function useWeeklyVisits() {
-  return useMemo(() => {
-    const today = new Date();
-    let dayOfWeek = today.getDay(); 
-    let adjustedDay = dayOfWeek === 0 ? 7 : dayOfWeek;
-    
-    const startOfWeek = new Date(today);
-    startOfWeek.setDate(today.getDate() - adjustedDay + 1);
-    const seed = startOfWeek.getFullYear() * 10000 + (startOfWeek.getMonth() + 1) * 100 + startOfWeek.getDate();
-    
-    const random = (s) => {
-      let x = Math.sin(s) * 10000;
-      return x - Math.floor(x);
-    };
+  const [data, setData] = useState([]);
+  const [maxVisits, setMaxVisits] = useState(1);
 
-    const days = ["周一", "周二", "周三", "周四", "周五", "周六", "周日"];
-    const data = [];
+  useEffect(() => {
+    let isMounted = true;
     
-    let currentVisits = 120 + Math.floor(random(seed) * 50);
-    let maxVisits = currentVisits;
-    
-    for (let i = 1; i <= adjustedDay; i++) {
-      data.push({
-        day: days[i - 1],
-        visits: currentVisits
-      });
-      maxVisits = Math.max(maxVisits, currentVisits);
-      currentVisits = Math.max(50, currentVisits + Math.floor((random(seed + i) - 0.4) * 80));
+    async function fetchVisits() {
+      try {
+        const today = new Date();
+        const todayStr = today.toISOString().split('T')[0];
+        
+        // Find this week's Monday
+        let dayOfWeek = today.getDay(); 
+        let adjustedDay = dayOfWeek === 0 ? 7 : dayOfWeek;
+        const startOfWeek = new Date(today);
+        startOfWeek.setDate(today.getDate() - adjustedDay + 1);
+        const mondayStr = startOfWeek.toISOString().split('T')[0];
+
+        // Increment visit only once per session
+        if (!sessionStorage.getItem('buaa_visited')) {
+          await supabase.rpc('increment_page_visit', { p_date: todayStr });
+          sessionStorage.setItem('buaa_visited', 'true');
+        }
+
+        // Fetch data from Monday to today
+        const { data: dbData, error } = await supabase
+          .from('page_visits')
+          .select('*')
+          .gte('visit_date', mondayStr)
+          .lte('visit_date', todayStr)
+          .order('visit_date', { ascending: true });
+
+        if (error) {
+          console.error("Error fetching visits:", error);
+          return;
+        }
+
+        if (!isMounted) return;
+
+        // Build 7-day array up to today
+        const daysLabels = ["周一", "周二", "周三", "周四", "周五", "周六", "周日"];
+        const parsedData = [];
+        let maxV = 10; // minimum scale
+
+        // Map DB data by date string
+        const visitsByDate = {};
+        if (dbData) {
+          dbData.forEach(row => {
+            visitsByDate[row.visit_date] = row.visits;
+          });
+        }
+
+        for (let i = 0; i < adjustedDay; i++) {
+          const iterDate = new Date(startOfWeek);
+          iterDate.setDate(startOfWeek.getDate() + i);
+          const dateStr = iterDate.toISOString().split('T')[0];
+          
+          const visits = visitsByDate[dateStr] || (dateStr === todayStr ? 1 : 0);
+          maxV = Math.max(maxV, visits);
+          
+          parsedData.push({
+            day: daysLabels[i],
+            visits: visits
+          });
+        }
+
+        setData(parsedData);
+        setMaxVisits(maxV);
+      } catch (err) {
+        console.error("Supabase operation failed", err);
+      }
     }
-    
-    return { data, maxVisits };
+
+    fetchVisits();
+
+    return () => { isMounted = false; };
   }, []);
+
+  return { data, maxVisits };
 }
 
 const WeeklyVisitsChart = memo(() => {
@@ -2067,8 +2116,10 @@ const WeeklyVisitsChart = memo(() => {
         <Activity aria-hidden="true" />
         <span>本周热度 (周一至今)</span>
       </div>
-      <strong style={{ fontSize: "28px" }}>{data[data.length - 1].visits}</strong>
-      <p style={{ margin: 0, opacity: 0.8 }}>今日访问量 (模拟)</p>
+      <strong style={{ fontSize: "28px" }}>
+        {data.length > 0 ? data[data.length - 1].visits : "..."}
+      </strong>
+      <p style={{ margin: 0, opacity: 0.8 }}>今日访问量 (实时)</p>
       
       <div style={{ flex: 1, marginTop: "12px", position: "relative" }}>
         <svg width="100%" height="100%" viewBox={`0 -5 ${chartWidth} ${chartHeight + 20}`} preserveAspectRatio="none" style={{ overflow: "visible" }}>
