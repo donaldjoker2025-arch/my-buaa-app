@@ -267,11 +267,50 @@ svg {
   animation: fadeInUp 0.6s 0.3s var(--transition-smooth) both;
 }
 
+.hero-stacked-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 248px;
+  perspective: 1000px;
+  transform-style: preserve-3d;
+  animation: fadeInUp 0.7s 0.2s var(--transition-smooth) both;
+}
+
+.hero-stacked-card {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+  cursor: pointer;
+  border-radius: var(--radius);
+}
+
+.hero-stacked-card.active {
+  z-index: 2;
+  transform: translateZ(20px) translate(0, 0) rotate(0deg);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+  filter: brightness(1);
+}
+
+.hero-stacked-card.inactive {
+  z-index: 1;
+  transform: translateZ(0px) translate(12px, 16px) rotate(4deg);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  filter: brightness(0.65) blur(1px);
+}
+
+.hero-stacked-container:hover .hero-stacked-card.inactive {
+  transform: translateZ(0px) translate(28px, 24px) rotate(6deg);
+  filter: brightness(0.85) blur(0px);
+}
+
 .hero-visual {
   position: relative;
   overflow: hidden;
   display: flex;
-  min-height: 248px;
+  height: 100%;
   flex-direction: column;
   justify-content: space-between;
   padding: 22px;
@@ -290,6 +329,26 @@ svg {
     radial-gradient(circle at 80% 20%, rgba(79, 110, 247, 0.2), transparent 50%),
     radial-gradient(circle at 20% 80%, rgba(6, 182, 212, 0.15), transparent 50%);
   pointer-events: none;
+}
+
+@keyframes drawLine {
+  to { stroke-dashoffset: 0; }
+}
+
+.chart-polyline {
+  stroke-dasharray: 1000;
+  stroke-dashoffset: 1000;
+  animation: drawLine 2s 0.3s ease-out forwards;
+}
+
+.chart-point {
+  opacity: 0;
+  transform-origin: center;
+  animation: scaleIn 0.5s var(--transition-bounce) forwards;
+}
+
+.hero-visual.chart-card {
+  background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
 }
 
 .hero-visual__top {

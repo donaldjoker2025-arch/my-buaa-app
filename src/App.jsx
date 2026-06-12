@@ -23,7 +23,8 @@ import {
   Dices,
   Sparkles,
   Network,
-  Star
+  Star,
+  Activity
 } from "lucide-react";
 
 const GithubIcon = ({ size = 24, className = "" }) => (
@@ -2010,6 +2011,129 @@ const FeedbackSection = memo(() => {
   );
 });
 
+function useWeeklyVisits() {
+  return useMemo(() => {
+    const today = new Date();
+    let dayOfWeek = today.getDay(); 
+    let adjustedDay = dayOfWeek === 0 ? 7 : dayOfWeek;
+    
+    const startOfWeek = new Date(today);
+    startOfWeek.setDate(today.getDate() - adjustedDay + 1);
+    const seed = startOfWeek.getFullYear() * 10000 + (startOfWeek.getMonth() + 1) * 100 + startOfWeek.getDate();
+    
+    const random = (s) => {
+      let x = Math.sin(s) * 10000;
+      return x - Math.floor(x);
+    };
+
+    const days = ["周一", "周二", "周三", "周四", "周五", "周六", "周日"];
+    const data = [];
+    
+    let currentVisits = 120 + Math.floor(random(seed) * 50);
+    let maxVisits = currentVisits;
+    
+    for (let i = 1; i <= adjustedDay; i++) {
+      data.push({
+        day: days[i - 1],
+        visits: currentVisits
+      });
+      maxVisits = Math.max(maxVisits, currentVisits);
+      currentVisits = Math.max(50, currentVisits + Math.floor((random(seed + i) - 0.4) * 80));
+    }
+    
+    return { data, maxVisits };
+  }, []);
+}
+
+const WeeklyVisitsChart = memo(() => {
+  const { data, maxVisits } = useWeeklyVisits();
+  
+  // Create SVG points
+  // Width: 200px, Height: 100px. Margin 10px.
+  const chartWidth = 200;
+  const chartHeight = 80;
+  
+  const points = data.map((d, index) => {
+    const x = data.length === 1 ? chartWidth / 2 : (index / (data.length - 1)) * chartWidth;
+    const y = chartHeight - (d.visits / (maxVisits * 1.2)) * chartHeight;
+    return `${x},${y}`;
+  }).join(" ");
+
+  return (
+    <div className="hero-visual chart-card" aria-label="本周访问量">
+      <div className="hero-visual__top">
+        <Activity aria-hidden="true" />
+        <span>本周热度 (周一至今)</span>
+      </div>
+      <strong style={{ fontSize: "28px" }}>{data[data.length - 1].visits}</strong>
+      <p style={{ margin: 0, opacity: 0.8 }}>今日访问量 (模拟)</p>
+      
+      <div style={{ flex: 1, marginTop: "12px", position: "relative" }}>
+        <svg width="100%" height="100%" viewBox={`0 0 ${chartWidth} ${chartHeight}`} preserveAspectRatio="none" style={{ overflow: "visible" }}>
+          <polyline 
+            points={points} 
+            fill="none" 
+            stroke="url(#chartGradient)" 
+            strokeWidth="3" 
+            strokeLinecap="round" 
+            strokeLinejoin="round" 
+            className="chart-polyline"
+          />
+          {data.map((d, index) => {
+            const x = data.length === 1 ? chartWidth / 2 : (index / (data.length - 1)) * chartWidth;
+            const y = chartHeight - (d.visits / (maxVisits * 1.2)) * chartHeight;
+            return (
+              <circle key={index} cx={x} cy={y} r="4" fill="#fff" stroke="#4f6ef7" strokeWidth="2" className="chart-point" style={{ animationDelay: `${0.3 + index * 0.1}s` }} />
+            );
+          })}
+          <defs>
+            <linearGradient id="chartGradient" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0%" stopColor="#06b6d4" />
+              <stop offset="100%" stopColor="#4f6ef7" />
+            </linearGradient>
+          </defs>
+        </svg>
+      </div>
+    </div>
+  );
+});
+
+const HeroVisualStacked = memo(({ count }) => {
+  const [activeCard, setActiveCard] = useState("stats");
+
+  return (
+    <div className={`hero-stacked-container ${activeCard === "chart" ? "flipped" : ""}`}>
+      <div 
+        className={`hero-stacked-card ${activeCard === "stats" ? "active" : "inactive"}`}
+        onClick={() => activeCard === "chart" && setActiveCard("stats")}
+      >
+        <div className="hero-visual" aria-label="公开导师信息概览">
+          <div className="hero-visual__top">
+            <BarChart3 aria-hidden="true" />
+            <span>公开来源记录</span>
+          </div>
+          <strong>{count}</strong>
+          <p>两院导师信息</p>
+          <div className="hero-bars" aria-hidden="true">
+            <span style={{ height: "72%" }} />
+            <span style={{ height: "48%" }} />
+            <span style={{ height: "84%" }} />
+            <span style={{ height: "58%" }} />
+            <span style={{ height: "68%" }} />
+          </div>
+        </div>
+      </div>
+
+      <div 
+        className={`hero-stacked-card chart-card-wrapper ${activeCard === "chart" ? "active" : "inactive"}`}
+        onClick={() => activeCard === "stats" && setActiveCard("chart")}
+      >
+        <WeeklyVisitsChart />
+      </div>
+    </div>
+  );
+});
+
 export default function App() {
   const [dbResults, setDbResults] = useState(supervisors);
   const [schoolFilter, setSchoolFilter] = useState("全部");
@@ -2296,21 +2420,7 @@ export default function App() {
             面向考研和保研择导的公开信息工作台。保留官网可核验来源，补充方向覆盖、联系入口、资料线索和联系前核验清单，帮助先缩小范围，再去官网确认细节。
           </p>
         </div>
-        <div className="hero-visual" aria-label="公开导师信息概览">
-          <div className="hero-visual__top">
-            <BarChart3 aria-hidden="true" />
-            <span>公开来源记录</span>
-          </div>
-          <strong>{supervisors.length}</strong>
-          <p>两院导师信息</p>
-          <div className="hero-bars" aria-hidden="true">
-            <span style={{ height: "72%" }} />
-            <span style={{ height: "48%" }} />
-            <span style={{ height: "84%" }} />
-            <span style={{ height: "58%" }} />
-            <span style={{ height: "68%" }} />
-          </div>
-        </div>
+        <HeroVisualStacked count={supervisors.length} />
       </section>
 
       <section className="stat-grid" aria-label="数据概览">
