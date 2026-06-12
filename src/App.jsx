@@ -2024,12 +2024,10 @@ function useWeeklyVisits() {
         const today = new Date();
         const todayStr = today.toISOString().split('T')[0];
         
-        // Find this week's Monday
-        let dayOfWeek = today.getDay(); 
-        let adjustedDay = dayOfWeek === 0 ? 7 : dayOfWeek;
-        const startOfWeek = new Date(today);
-        startOfWeek.setDate(today.getDate() - adjustedDay + 1);
-        const mondayStr = startOfWeek.toISOString().split('T')[0];
+        // Rolling 7 days: start from 6 days ago
+        const sixDaysAgo = new Date(today);
+        sixDaysAgo.setDate(today.getDate() - 6);
+        const startStr = sixDaysAgo.toISOString().split('T')[0];
 
         // Increment visit only once per session
         if (!sessionStorage.getItem('buaa_visited')) {
@@ -2037,11 +2035,11 @@ function useWeeklyVisits() {
           sessionStorage.setItem('buaa_visited', 'true');
         }
 
-        // Fetch data from Monday to today
+        // Fetch data from 6 days ago to today
         const { data: dbData, error } = await supabase
           .from('page_visits')
           .select('*')
-          .gte('visit_date', mondayStr)
+          .gte('visit_date', startStr)
           .lte('visit_date', todayStr)
           .order('visit_date', { ascending: true });
 
@@ -2052,8 +2050,8 @@ function useWeeklyVisits() {
 
         if (!isMounted) return;
 
-        // Build 7-day array up to today
-        const daysLabels = ["周一", "周二", "周三", "周四", "周五", "周六", "周日"];
+        // Build rolling 7-day array
+        const daysOfWeek = ["日", "一", "二", "三", "四", "五", "六"];
         const parsedData = [];
         let maxV = 10; // minimum scale
 
@@ -2065,16 +2063,22 @@ function useWeeklyVisits() {
           });
         }
 
-        for (let i = 0; i < adjustedDay; i++) {
-          const iterDate = new Date(startOfWeek);
-          iterDate.setDate(startOfWeek.getDate() + i);
+        for (let i = 0; i < 7; i++) {
+          const iterDate = new Date(sixDaysAgo);
+          iterDate.setDate(sixDaysAgo.getDate() + i);
           const dateStr = iterDate.toISOString().split('T')[0];
           
-          const visits = visitsByDate[dateStr] || (dateStr === todayStr ? 1 : 0);
+          let visits = visitsByDate[dateStr] || 0;
+          
+          // Ensure today reflects at least 1 if they just visited
+          if (dateStr === todayStr && sessionStorage.getItem('buaa_visited')) {
+            visits = Math.max(visits, 1);
+          }
+          
           maxV = Math.max(maxV, visits);
           
           parsedData.push({
-            day: daysLabels[i],
+            day: i === 6 ? "今日" : "周" + daysOfWeek[iterDate.getDay()],
             visits: visits
           });
         }
@@ -2103,18 +2107,16 @@ const WeeklyVisitsChart = memo(() => {
   const chartHeight = 65; // Reduced slightly to make room for labels
   
   const points = data.map((d, index) => {
-    const x = (index / 6) * chartWidth; // Fixed 7-day grid
+    const x = (index / 6) * chartWidth; 
     const y = chartHeight - (d.visits / (maxVisits * 1.2)) * chartHeight;
     return `${x},${y}`;
   }).join(" ");
-
-  const daysLabels = ["一", "二", "三", "四", "五", "六", "日"];
 
   return (
     <div className="hero-visual chart-card" aria-label="本周访问量">
       <div className="hero-visual__top">
         <Activity aria-hidden="true" />
-        <span>本周热度 (周一至今)</span>
+        <span>最近七日访问热度</span>
       </div>
       <strong style={{ fontSize: "28px" }}>
         {data.length > 0 ? data[data.length - 1].visits : "..."}
@@ -2140,11 +2142,11 @@ const WeeklyVisitsChart = memo(() => {
             );
           })}
           {/* Add x-axis labels */}
-          {daysLabels.map((label, index) => {
+          {data.map((d, index) => {
             const x = (index / 6) * chartWidth;
             return (
               <text key={index} x={x} y={chartHeight + 15} fill="rgba(255,255,255,0.5)" fontSize="10" textAnchor="middle" style={{ animation: "fadeIn 0.5s 0.8s both" }}>
-                {label}
+                {d.day}
               </text>
             );
           })}
