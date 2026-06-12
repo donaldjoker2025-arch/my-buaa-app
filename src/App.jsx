@@ -2053,7 +2053,7 @@ function useWeeklyVisits() {
         // Build rolling 7-day array
         const daysOfWeek = ["日", "一", "二", "三", "四", "五", "六"];
         const parsedData = [];
-        let maxV = 10; // minimum scale
+        let maxV = 1; // Minimum scale of 1 instead of 10 to ensure even small numbers show up big
 
         // Map DB data by date string
         const visitsByDate = {};
@@ -2103,11 +2103,12 @@ const WeeklyVisitsChart = memo(() => {
   
   // Create SVG points
   // Width: 200px, Height: 100px. Margin 10px.
-  const chartWidth = 200;
-  const chartHeight = 65; // Reduced slightly to make room for labels
+  const chartWidth = 220; // Expanded to fit padding
+  const innerWidth = 200; // The actual line width
+  const chartHeight = 60; // Chart drawing area height
   
   const points = data.map((d, index) => {
-    const x = (index / 6) * chartWidth; 
+    const x = 10 + (index / 6) * innerWidth; 
     const y = chartHeight - (d.visits / (maxVisits * 1.2)) * chartHeight;
     return `${x},${y}`;
   }).join(" ");
@@ -2124,7 +2125,7 @@ const WeeklyVisitsChart = memo(() => {
       <p style={{ margin: 0, opacity: 0.8 }}>今日访问量 (实时)</p>
       
       <div style={{ flex: 1, marginTop: "12px", position: "relative" }}>
-        <svg width="100%" height="100%" viewBox={`0 -5 ${chartWidth} ${chartHeight + 20}`} preserveAspectRatio="none" style={{ overflow: "visible" }}>
+        <svg width="100%" height="100%" viewBox={`0 -10 ${chartWidth} ${chartHeight + 35}`} preserveAspectRatio="none" style={{ overflow: "visible" }}>
           <polyline 
             points={points} 
             fill="none" 
@@ -2135,7 +2136,7 @@ const WeeklyVisitsChart = memo(() => {
             className="chart-polyline"
           />
           {data.map((d, index) => {
-            const x = (index / 6) * chartWidth;
+            const x = 10 + (index / 6) * innerWidth;
             const y = chartHeight - (d.visits / (maxVisits * 1.2)) * chartHeight;
             return (
               <circle key={index} cx={x} cy={y} r="4" fill="#fff" stroke="#4f6ef7" strokeWidth="2" className="chart-point" style={{ animationDelay: `${0.3 + index * 0.1}s` }} />
@@ -2143,9 +2144,9 @@ const WeeklyVisitsChart = memo(() => {
           })}
           {/* Add x-axis labels */}
           {data.map((d, index) => {
-            const x = (index / 6) * chartWidth;
+            const x = 10 + (index / 6) * innerWidth;
             return (
-              <text key={index} x={x} y={chartHeight + 15} fill="rgba(255,255,255,0.5)" fontSize="10" textAnchor="middle" style={{ animation: "fadeIn 0.5s 0.8s both" }}>
+              <text key={index} x={x} y={chartHeight + 22} fill="rgba(255,255,255,0.6)" fontSize="11" textAnchor="middle" style={{ animation: "fadeIn 0.5s 0.8s both" }}>
                 {d.day}
               </text>
             );
