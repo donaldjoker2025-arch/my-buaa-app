@@ -1988,6 +1988,18 @@ const FeedbackSection = memo(() => {
             所有的建议、Bug 反馈、导师信息的订正、或者是单纯的夸奖，都可以发在这里！提的意见<strong>所有人可见</strong>。<br/>
             （初次使用请点击下方授权 GitHub 登录，评论将自动以 Issue 形式记录在开源仓库中）
           </p>
+          <div style={{ marginTop: 12 }}>
+            <a 
+              href="https://github.com/donaldjoker2025-arch/my-buaa-app/issues/new?labels=%E5%86%85%E6%B5%8B%E6%84%8F%E8%A7%81&title=%5B%E5%86%85%E6%B5%8B%E5%8F%8D%E9%A6%88%5D+" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="chip chip--blue"
+              style={{ textDecoration: "none", fontSize: "13px", padding: "6px 14px" }}
+            >
+              <ExternalLink size={14} />
+              如果下方未加载，也可以点我直接前往 GitHub 提意见
+            </a>
+          </div>
         </div>
       </div>
       <div className="filter-panel" style={{ minHeight: "400px", padding: "10px", display: "flex", flexDirection: "column" }}>
