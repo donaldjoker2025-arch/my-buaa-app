@@ -2473,6 +2473,10 @@ export default function App() {
         <MatchQuiz supervisors={supervisors} onOpenMentor={handleOpenMentorFromLab} />
       )}
 
+      {activeTab === "feedback" && (
+        <FeedbackSection />
+      )}
+
       {activeTab === "sources" && (
         <section className="content-section">
           <SectionTitle eyebrow="来源与建议" title="把不确定信息留给官网复核">
