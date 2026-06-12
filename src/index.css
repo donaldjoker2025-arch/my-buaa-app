@@ -191,7 +191,6 @@ svg {
   width: fit-content;
   align-items: center;
   gap: 6px;
-  margin-bottom: 12px;
   color: var(--blue);
   font-family: var(--font-heading);
   font-size: 12px;
@@ -200,6 +199,48 @@ svg {
   text-transform: uppercase;
   letter-spacing: 0.08em;
   animation: fadeIn 0.5s var(--transition-smooth) both;
+}
+
+.hero-top-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+
+.github-star-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 99px;
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 600;
+  text-decoration: none;
+  box-shadow: 0 2px 8px rgba(20, 40, 65, 0.04);
+  transition: all 0.25s var(--transition-smooth);
+  animation: fadeIn 0.5s 0.1s var(--transition-smooth) both;
+}
+
+.github-star-pill:hover {
+  border-color: var(--blue);
+  color: var(--blue);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(79, 110, 247, 0.12);
+}
+
+.github-star-pill .star-icon {
+  color: var(--amber);
+  fill: var(--amber-soft);
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.github-star-pill:hover .star-icon {
+  transform: scale(1.2) rotate(15deg);
+  fill: var(--amber);
 }
 
 .hero-copy h1 {

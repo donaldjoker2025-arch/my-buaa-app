@@ -22,7 +22,9 @@ import {
   Users,
   Dices,
   Sparkles,
-  Network
+  Network,
+  Github,
+  Star
 } from "lucide-react";
 import { supervisorDetails } from "./supervisorDetails";
 import { communityNotes } from "./communityNotes";
@@ -1939,11 +1941,48 @@ function MentorLabSection({
           ))}
         </div>
       )}
-    </section>
+    </div>
   );
 }
 
+const FeedbackSection = memo(() => {
+  const containerRef = useRef(null);
+
+  useEffect(() => {
+    if (containerRef.current && containerRef.current.childNodes.length === 0) {
+      const script = document.createElement("script");
+      script.src = "https://utteranc.es/client.js";
+      script.async = true;
+      script.setAttribute("repo", "donaldjoker2025-arch/my-buaa-app");
+      script.setAttribute("issue-term", "pathname");
+      script.setAttribute("label", "内测意见");
+      script.setAttribute("theme", "github-light");
+      script.setAttribute("crossorigin", "anonymous");
+      containerRef.current.appendChild(script);
+    }
+  }, []);
+
+  return (
+    <div className="content-section" style={{ animation: "fadeInUp 0.4s var(--transition-smooth) both" }}>
+      <div className="notice" style={{ marginBottom: 20 }}>
+        <MessageSquare size={20} />
+        <div>
+          <strong style={{ fontSize: "16px" }}>内测意见与反馈区</strong>
+          <p style={{ margin: "6px 0 0", fontSize: "14px", lineHeight: 1.6, color: "var(--text-muted)" }}>
+            所有的建议、Bug 反馈、导师信息的订正、或者是单纯的夸奖，都可以发在这里！提的意见<strong>所有人可见</strong>。<br/>
+            （初次使用请点击下方授权 GitHub 登录，评论将自动以 Issue 形式记录在开源仓库中）
+          </p>
+        </div>
+      </div>
+      <div className="filter-panel" style={{ minHeight: "400px", padding: "10px", display: "flex", flexDirection: "column" }}>
+        <div ref={containerRef} style={{ flex: 1, width: "100%" }} />
+      </div>
+    </div>
+  );
+});
+
 export default function App() {
+  const [dbResults, setDbResults] = useState(supervisors);
   const [schoolFilter, setSchoolFilter] = useState("全部");
   const [catFilter, setCatFilter] = useState("全部");
   const [searchQ, setSearchQ] = useState("");
@@ -2200,6 +2239,7 @@ export default function App() {
     { id: "database", label: "导师索引", icon: Search },
     { id: "topic-galaxy", label: "星云图谱", icon: Network },
     { id: "match-quiz", label: "匹配测试", icon: Sparkles },
+    { id: "feedback", label: "内测意见", icon: MessageSquare },
     { id: "mentor-lab", label: "择导实验室", icon: BarChart3 },
     { id: "directions", label: "培养方向", icon: GraduationCap },
     { id: "sources", label: "来源与建议", icon: LinkIcon },
@@ -2209,7 +2249,19 @@ export default function App() {
     <main className="app-shell">
       <section className="hero-panel">
         <div className="hero-copy">
-          <span className="eyebrow">BUAA Biomedical Mentor Index</span>
+          <div className="hero-top-row">
+            <span className="eyebrow">BUAA Biomedical Mentor Index</span>
+            <a 
+              href="https://github.com/donaldjoker2025-arch/my-buaa-app" 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              className="github-star-pill"
+            >
+              <Github size={14} />
+              <span>觉得有用？在 GitHub 给我点个 Star 吧！</span>
+              <Star size={14} className="star-icon" />
+            </a>
+          </div>
           <h1>北航生医工/医工两院导师信息索引</h1>
           <p>
             面向考研和保研择导的公开信息工作台。保留官网可核验来源，补充方向覆盖、联系入口、资料线索和联系前核验清单，帮助先缩小范围，再去官网确认细节。
