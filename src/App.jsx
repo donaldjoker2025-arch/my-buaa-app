@@ -26,7 +26,8 @@ import {
   Star,
   Activity,
   Heart,
-  X
+  X,
+  Share2
 } from "lucide-react";
 import { supabase } from "./lib/supabase";
 
@@ -2506,19 +2507,47 @@ export default function App() {
     { id: "sources", label: "来源与建议", icon: LinkIcon },
   ];
 
+  const handleShare = async () => {
+    const shareData = {
+      title: '北航生医工导师检索与匹配系统',
+      text: '发现一个神仙开源项目！北航生医工/医工交叉“择导”利器，支持关键词筛选、科研性格匹配测试，快来看看！',
+      url: window.location.href
+    };
+    if (navigator.share) {
+      try {
+        await navigator.share(shareData);
+      } catch (err) {
+        console.error('Error sharing:', err);
+      }
+    } else {
+      navigator.clipboard.writeText(`${shareData.text} ${shareData.url}`);
+      alert("网址及安利文案已复制到剪贴板，快去分享给朋友吧！");
+    }
+  };
+
   return (
     <main className="app-shell">
       <section className="hero-panel">
         <div className="hero-copy">
           <div className="hero-top-row">
             <span className="eyebrow">BUAA Biomedical Mentor Index</span>
-            <button 
-              onClick={() => setIsSponsorModalOpen(true)}
-              className="sponsor-pill"
-            >
-              <Heart size={14} className="heart-icon" />
-              <span>赞助此项目</span>
-            </button>
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <button 
+                onClick={handleShare}
+                className="sponsor-pill"
+                style={{ background: 'var(--blue-soft)', color: 'var(--blue)', borderColor: 'rgba(79, 110, 247, 0.2)' }}
+              >
+                <Share2 size={14} className="heart-icon" />
+                <span>一键分享</span>
+              </button>
+              <button 
+                onClick={() => setIsSponsorModalOpen(true)}
+                className="sponsor-pill"
+              >
+                <Heart size={14} className="heart-icon" />
+                <span>赞助此项目</span>
+              </button>
+            </div>
             <a 
               href="https://github.com/donaldjoker2025-arch/my-buaa-app" 
               target="_blank" 
