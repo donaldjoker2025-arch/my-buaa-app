@@ -20,7 +20,9 @@ import {
   SlidersHorizontal,
   UserRound,
   Users,
+  Share2
 } from "lucide-react";
+import { supabase } from "./lib/supabase";
 import { supervisorDetails } from "./supervisorDetails";
 import { communityNotes } from "./communityNotes";
 
@@ -1937,6 +1939,22 @@ function MentorLabSection({
 }
 
 export default function App() {
+  // Silent visitor tracking
+  useEffect(() => {
+    const recordVisit = async () => {
+      try {
+        const today = new Date().toISOString().split('T')[0];
+        await supabase.rpc('increment_visit', { visit_date_param: today });
+      } catch (e) {
+        console.error("Failed to record visit", e);
+      }
+    };
+    // use a ref to prevent double execution in React StrictMode
+    if (!window.__visitRecorded) {
+      window.__visitRecorded = true;
+      recordVisit();
+    }
+  }, []);
   const [schoolFilter, setSchoolFilter] = useState("全部");
   const [catFilter, setCatFilter] = useState("全部");
   const [searchQ, setSearchQ] = useState("");
