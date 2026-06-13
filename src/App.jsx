@@ -2172,7 +2172,32 @@ export default function App() {
     <main className="app-shell">
       <section className="hero-panel">
         <div className="hero-copy">
-          <span className="eyebrow">BUAA Biomedical Mentor Index</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <span className="eyebrow">BUAA Biomedical Mentor Index</span>
+            <button 
+              onClick={() => {
+                const shareData = {
+                  title: '北航生医工导师检索与匹配系统',
+                  text: '发现一个神仙开源项目！北航生医工/医工交叉“择导”利器，支持关键词筛选，快来看看！',
+                  url: window.location.href
+                };
+                if (navigator.share) {
+                  navigator.share(shareData).catch(console.error);
+                } else {
+                  navigator.clipboard.writeText(`${shareData.text} ${shareData.url}`);
+                  alert("网址及安利文案已复制到剪贴板，快去分享给朋友吧！");
+                }
+              }}
+              style={{
+                display: 'inline-flex', alignItems: 'center', gap: '6px',
+                padding: '4px 12px', borderRadius: '99px', border: '1px solid #4f6ef7',
+                background: '#eef2ff', color: '#4f6ef7', fontSize: '12px', fontWeight: 'bold', cursor: 'pointer'
+              }}
+            >
+              <Share2 size={14} />
+              <span>一键分享</span>
+            </button>
+          </div>
           <h1>北航生医工/医工两院导师信息索引</h1>
           <p>
             面向考研和保研择导的公开信息工作台。保留官网可核验来源，补充方向覆盖、联系入口、资料线索和联系前核验清单，帮助先缩小范围，再去官网确认细节。
